@@ -8,10 +8,12 @@ export const aiService = {
     try {
       const response = await axios.post(`${API_BASE_URL}/api/gemini-chat`, {
         message,
-        history: history.map((msg) => ({
-          role: msg.role,
-          content: msg.content,
-        })),
+        history: history
+          .filter(msg => msg.id !== 'welcome' && msg.content !== 'I apologize, but I encountered an error. Please try again later.')
+          .map((msg) => ({
+            role: msg.role === 'assistant' ? 'assistant' : 'user',
+            content: msg.content,
+          })),
       });
 
       return response.data.reply;

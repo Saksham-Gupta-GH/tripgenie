@@ -101,7 +101,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     user,
     firebaseUser,
     isLoading,
-    isAuthenticated: !!user,
+    isAuthenticated: !!firebaseUser,
     login,
     register,
     logout,
