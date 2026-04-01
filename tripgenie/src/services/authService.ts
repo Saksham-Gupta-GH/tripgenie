@@ -5,10 +5,12 @@ import {
   sendPasswordResetEmail,
   updateProfile,
   onAuthStateChanged,
+  deleteUser,
   type User as FirebaseUser,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../firebase';
+import { ADMIN_EMAIL } from '../config/admin';
 import type { User, UserRole } from '../types';
 
 const AUTH_ERROR_MESSAGES: Record<string, string> = {
@@ -18,14 +20,45 @@ const AUTH_ERROR_MESSAGES: Record<string, string> = {
   'auth/user-not-found': 'No account found with this email.',
   'auth/wrong-password': 'Incorrect password.',
   'auth/invalid-credential': 'Invalid email or password.',
+  'auth/operation-not-allowed': 'Email/password sign-in is not enabled in Firebase.',
 };
 
+const FIRESTORE_ERROR_MESSAGES: Record<string, string> = {
+  'permission-denied':
+    'Could not save your profile (Firestore permission denied). In Firebase Console, open Firestore → Rules, publish the rules from this project’s firestore.rules file, and ensure the database exists.',
+  'failed-precondition': 'Firestore request failed. Check that Firestore is enabled for this project.',
+};
+
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+/** Only ADMIN_EMAIL may register as admin; that email always becomes admin. */
+export function resolveRegisterRole(email: string, requested: UserRole): UserRole {
+  const e = normalizeEmail(email);
+  if (e === normalizeEmail(ADMIN_EMAIL)) return 'admin';
+  if (requested === 'admin') {
+    throw new Error('Administrator accounts cannot be created from sign-up. Use traveller or travel agent.');
+  }
+  return requested;
+}
+
 const getErrorMessage = (error: unknown): string => {
+  // Always log the error to console for debugging in production
+  console.error('Firebase Auth/Firestore Error:', error);
+
   if (error && typeof error === 'object' && 'code' in error) {
     const code = (error as { code: string }).code;
-    return AUTH_ERROR_MESSAGES[code] || 'An unexpected error occurred.';
+    if (code.startsWith('auth/')) {
+      return AUTH_ERROR_MESSAGES[code] || `Authentication error (${code}).`;
+    }
+    if (code === 'permission-denied' || code === 'failed-precondition') {
+      return FIRESTORE_ERROR_MESSAGES[code];
+    }
+    return `Error (${code}).`;
   }
-  return 'An unexpected error occurred.';
+  if (error instanceof Error) return error.message;
+  return 'An unexpected error occurred. Please check the browser console for details.';
 };
 
 export const authService = {
@@ -35,30 +68,44 @@ export const authService = {
     name: string,
     role: UserRole
   ): Promise<User> => {
+    const resolvedRole = resolveRegisterRole(email, role);
+    const emailNorm = normalizeEmail(email);
+
+    let firebaseUser: FirebaseUser | null = null;
     try {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
         password
       );
-      const firebaseUser = userCredential.user;
+      firebaseUser = userCredential.user;
 
       await updateProfile(firebaseUser, { displayName: name });
 
-      const userData: Omit<User, 'id'> = {
-        email,
+      const userData = {
+        email: emailNorm,
         name,
-        role,
-        createdAt: new Date(),
+        role: resolvedRole,
+        createdAt: serverTimestamp(),
       };
 
       await setDoc(doc(db, 'users', firebaseUser.uid), userData);
 
       return {
         id: firebaseUser.uid,
-        ...userData,
+        email: emailNorm,
+        name,
+        role: resolvedRole,
+        createdAt: new Date(),
       };
     } catch (error) {
+      if (firebaseUser) {
+        try {
+          await deleteUser(firebaseUser);
+        } catch {
+          /* ignore rollback failure */
+        }
+      }
       throw new Error(getErrorMessage(error));
     }
   },
@@ -77,7 +124,14 @@ export const authService = {
         throw new Error('User data not found.');
       }
 
-      const userData = userDoc.data() as Omit<User, 'id'>;
+      const raw = userDoc.data();
+      const userData = {
+        ...raw,
+        createdAt:
+          raw.createdAt && typeof raw.createdAt === 'object' && 'toDate' in raw.createdAt
+            ? (raw.createdAt as { toDate: () => Date }).toDate()
+            : new Date(),
+      } as Omit<User, 'id'>;
 
       return {
         id: firebaseUser.uid,
@@ -111,7 +165,14 @@ export const authService = {
         return null;
       }
 
-      const userData = userDoc.data() as Omit<User, 'id'>;
+      const raw = userDoc.data();
+      const userData = {
+        ...raw,
+        createdAt:
+          raw.createdAt && typeof raw.createdAt === 'object' && 'toDate' in raw.createdAt
+            ? (raw.createdAt as { toDate: () => Date }).toDate()
+            : new Date(),
+      } as Omit<User, 'id'>;
 
       return {
         id: firebaseUser.uid,
