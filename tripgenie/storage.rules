@@ -1,0 +1,27 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // Place images
+    match /place-images/{imageId} {
+      allow read: if true; // Public read access
+      allow write: if isAuthenticated();
+      allow delete: if isAuthenticated();
+    }
+
+    // User profile images
+    match /profile-images/{userId}/{imageId} {
+      allow read: if true;
+      allow write: if isAuthenticated() && isOwner(userId);
+      allow delete: if isAuthenticated() && isOwner(userId);
+    }
+  }
+}
