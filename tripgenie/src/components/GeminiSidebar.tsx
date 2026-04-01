@@ -68,12 +68,14 @@ export const GeminiSidebar: React.FC<GeminiSidebarProps> = ({
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
-    } catch {
+    } catch (err) {
       const errorMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content:
-          'I apologize, but I encountered an error. Please try again later.',
+          err instanceof Error
+            ? `Error: ${err.message}`
+            : 'I apologize, but I encountered an error. Please try again later.',
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);

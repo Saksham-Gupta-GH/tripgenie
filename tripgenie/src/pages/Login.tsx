@@ -9,6 +9,7 @@ export const Login: React.FC = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
+    rememberMe: false,
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -33,8 +34,11 @@ export const Login: React.FC = () => {
   }, [user, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value,
+    }));
     setError('');
   };
 
@@ -44,7 +48,7 @@ export const Login: React.FC = () => {
     setError('');
 
     try {
-      await login(formData.email, formData.password);
+      await login(formData.email, formData.password, formData.rememberMe);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
@@ -112,7 +116,13 @@ export const Login: React.FC = () => {
 
           <div className="flex items-center justify-between text-sm">
             <label className="flex items-center">
-              <input type="checkbox" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+              <input
+                type="checkbox"
+                name="rememberMe"
+                checked={formData.rememberMe}
+                onChange={handleChange}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
               <span className="ml-2 text-gray-600">Remember me</span>
             </label>
             <Link to="/forgot-password" className="text-blue-600 hover:text-blue-700">

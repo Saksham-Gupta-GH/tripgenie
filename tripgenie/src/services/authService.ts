@@ -2,6 +2,9 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence,
   sendPasswordResetEmail,
   updateProfile,
   onAuthStateChanged,
@@ -110,8 +113,12 @@ export const authService = {
     }
   },
 
-  login: async (email: string, password: string): Promise<User> => {
+  login: async (email: string, password: string, rememberMe: boolean = true): Promise<User> => {
     try {
+      await setPersistence(
+        auth,
+        rememberMe ? browserLocalPersistence : browserSessionPersistence
+      );
       const userCredential = await signInWithEmailAndPassword(
         auth,
         email,

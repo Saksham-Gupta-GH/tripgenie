@@ -14,7 +14,7 @@ interface AuthContextType {
   firebaseUser: FirebaseUser | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
   register: (
     email: string,
     password: string,
@@ -58,10 +58,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     return () => unsubscribe();
   }, [loadUser]);
 
-  const login = async (email: string, password: string): Promise<void> => {
+  const login = async (
+    email: string,
+    password: string,
+    rememberMe: boolean = true
+  ): Promise<void> => {
     setIsLoading(true);
     try {
-      const userData = await authService.login(email, password);
+      const userData = await authService.login(email, password, rememberMe);
       setUser(userData);
     } finally {
       setIsLoading(false);
