@@ -2,21 +2,22 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 
-const REQUIRED_FIREBASE_ENV = [
-  'VITE_FIREBASE_API_KEY',
-  'VITE_FIREBASE_AUTH_DOMAIN',
-  'VITE_FIREBASE_PROJECT_ID',
-  'VITE_FIREBASE_STORAGE_BUCKET',
-  'VITE_FIREBASE_MESSAGING_SENDER_ID',
-  'VITE_FIREBASE_APP_ID',
-] as const
+/** Each check must use a literal `import.meta.env.VITE_*` — Vite cannot replace dynamic keys. */
+function getMissingFirebaseEnv(): string[] {
+  const missing: string[] = []
+  if (!import.meta.env.VITE_FIREBASE_API_KEY) missing.push('VITE_FIREBASE_API_KEY')
+  if (!import.meta.env.VITE_FIREBASE_AUTH_DOMAIN) missing.push('VITE_FIREBASE_AUTH_DOMAIN')
+  if (!import.meta.env.VITE_FIREBASE_PROJECT_ID) missing.push('VITE_FIREBASE_PROJECT_ID')
+  if (!import.meta.env.VITE_FIREBASE_STORAGE_BUCKET) missing.push('VITE_FIREBASE_STORAGE_BUCKET')
+  if (!import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID) {
+    missing.push('VITE_FIREBASE_MESSAGING_SENDER_ID')
+  }
+  if (!import.meta.env.VITE_FIREBASE_APP_ID) missing.push('VITE_FIREBASE_APP_ID')
+  return missing
+}
 
 const rootEl = document.getElementById('root')!
-
-const missingFirebase = REQUIRED_FIREBASE_ENV.filter((key) => {
-  const v = import.meta.env[key]
-  return v === undefined || String(v).length === 0
-})
+const missingFirebase = getMissingFirebaseEnv()
 
 if (missingFirebase.length > 0) {
   rootEl.innerHTML = `
