@@ -44,22 +44,8 @@ export default async function handler(
     const modelName = process.env.GEMINI_MODEL || 'gemini-1.5-flash-latest';
     const model = genAI.getGenerativeModel({ model: modelName });
 
-    // Format history for Gemini
-    const formattedHistory =
-      history?.map((msg: { role: string; content: string }) => ({
-        role: msg.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: msg.content }],
-      })) || [];
-
-    const chat = model.startChat({
-      history: formattedHistory,
-      generationConfig: {
-        maxOutputTokens: 1000,
-        temperature: 0.7,
-      },
-    });
-
-    const result = await chat.sendMessage(message);
+    // Use direct generation like app.py
+    const result = await model.generateContent(message);
     const response = await result.response;
     const text = response.text();
 
