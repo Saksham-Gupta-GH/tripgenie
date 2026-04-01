@@ -330,6 +330,7 @@ export const PlacesManagement: React.FC = () => {
             </label>
             <textarea
               rows={3}
+              required
               value={formData.description}
               onChange={(e) =>
                 setFormData((prev) => ({

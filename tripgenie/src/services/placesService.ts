@@ -51,7 +51,13 @@ export const placesService = {
       };
     } catch (error) {
       console.error('Error creating place:', error);
-      throw new Error('Failed to create place');
+      if (error && typeof error === 'object' && 'code' in error) {
+        const code = (error as { code: string }).code;
+        if (code === 'permission-denied') {
+          throw new Error('Permission denied. Please check your Firestore rules and ensure you are logged in as an Agent or Admin.');
+        }
+      }
+      throw new Error(error instanceof Error ? error.message : 'Failed to create place');
     }
   },
 
