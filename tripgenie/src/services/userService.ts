@@ -9,6 +9,7 @@ import {
   orderBy,
 } from 'firebase/firestore';
 import { db } from '../firebase';
+import { ADMIN_EMAIL } from '../config/admin';
 import type { User, UserRole } from '../types';
 
 const USERS_COLLECTION = 'users';
@@ -79,9 +80,16 @@ export const userService = {
   updateUserRole: async (userId: string, role: UserRole): Promise<void> => {
     try {
       const userRef = doc(db, USERS_COLLECTION, userId);
+      const snap = await getDoc(userRef);
+      if (!snap.exists()) throw new Error('User not found');
+      const email = (snap.data().email as string | undefined)?.toLowerCase();
+      if (role === 'admin' && email !== ADMIN_EMAIL.toLowerCase()) {
+        throw new Error('Only the designated administrator account can have the admin role.');
+      }
       await updateDoc(userRef, { role });
     } catch (error) {
       console.error('Error updating user role:', error);
+      if (error instanceof Error) throw error;
       throw new Error('Failed to update user role');
     }
   },

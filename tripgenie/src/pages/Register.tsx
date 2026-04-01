@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { User, Mail, Lock, Eye, EyeOff, Loader2, MapPin } from 'lucide-react';
+import { ADMIN_EMAIL } from '../config/admin';
+import { User, Mail, Lock, Eye, EyeOff, Loader2, Briefcase } from 'lucide-react';
 import type { UserRole } from '../types';
 
 export const Register: React.FC = () => {
@@ -42,7 +43,11 @@ export const Register: React.FC = () => {
 
     try {
       await register(formData.email, formData.password, formData.name, formData.role);
-      navigate(`/${formData.role}/dashboard`);
+      const role =
+        formData.email.trim().toLowerCase() === ADMIN_EMAIL.toLowerCase()
+          ? 'admin'
+          : formData.role;
+      navigate(`/${role}/dashboard`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed');
     } finally {
@@ -70,7 +75,7 @@ export const Register: React.FC = () => {
               Full Name
             </label>
             <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none z-10" />
               <input
                 type="text"
                 name="name"
@@ -88,7 +93,7 @@ export const Register: React.FC = () => {
               Email Address
             </label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none z-10" />
               <input
                 type="email"
                 name="email"
@@ -106,7 +111,7 @@ export const Register: React.FC = () => {
               Account Type
             </label>
             <div className="relative">
-              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none z-10" />
               <select
                 name="role"
                 value={formData.role}
@@ -115,9 +120,11 @@ export const Register: React.FC = () => {
               >
                 <option value="traveller">Traveller</option>
                 <option value="agent">Travel Agent</option>
-                <option value="admin">Admin</option>
               </select>
             </div>
+            <p className="mt-1.5 text-xs text-gray-500">
+              The administrator account is <span className="font-medium">{ADMIN_EMAIL}</span> only; that address is assigned the admin role automatically.
+            </p>
           </div>
 
           <div>
@@ -125,7 +132,7 @@ export const Register: React.FC = () => {
               Password
             </label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none z-10" />
               <input
                 type={showPassword ? 'text' : 'password'}
                 name="password"
@@ -151,7 +158,7 @@ export const Register: React.FC = () => {
               Confirm Password
             </label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none z-10" />
               <input
                 type={showPassword ? 'text' : 'password'}
                 name="confirmPassword"

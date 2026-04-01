@@ -1,39 +1,47 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper functions
     function isAuthenticated() {
       return request.auth != null;
     }
-    
+
     function isOwner(userId) {
       return request.auth.uid == userId;
     }
-    
+
+    function adminOnlyEmail() {
+      return 'saksham77779@gmail.com';
+    }
+
     function isAdmin() {
-      return isAuthenticated() && 
+      return isAuthenticated() &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
-    
+
     function isAgent() {
-      return isAuthenticated() && 
+      return isAuthenticated() &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'agent';
     }
-    
+
     function isTraveller() {
-      return isAuthenticated() && 
+      return isAuthenticated() &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'traveller';
     }
 
-    // Users collection
+    function adminRoleChangeAllowed() {
+      return request.resource.data.role == resource.data.role ||
+        (request.resource.data.role != 'admin' || resource.data.email == adminOnlyEmail());
+    }
+
     match /users/{userId} {
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && isOwner(userId);
-      allow update: if isAdmin() || isOwner(userId);
+      allow create: if isAuthenticated() && isOwner(userId) &&
+        (request.resource.data.role != 'admin' || request.resource.data.email == adminOnlyEmail());
+      allow update: if (isAdmin() && adminRoleChangeAllowed()) ||
+        (isOwner(userId) && request.resource.data.role == resource.data.role);
       allow delete: if isAdmin();
     }
 
-    // Trips collection
     match /trips/{tripId} {
       allow read: if isAuthenticated() && (
         resource.data.userId == request.auth.uid ||
@@ -46,13 +54,12 @@ service cloud.firestore {
         isAdmin() ||
         (isAgent() && resource.data.status == 'pending')
       );
-      allow delete: if isAdmin() || 
+      allow delete: if isAdmin() ||
         (isAuthenticated() && resource.data.userId == request.auth.uid);
     }
 
-    // Places collection
     match /places/{placeId} {
-      allow read: if true; // Public read access
+      allow read: if true;
       allow create: if isAuthenticated() && (isAgent() || isAdmin());
       allow update: if isAuthenticated() && (
         isAdmin() ||

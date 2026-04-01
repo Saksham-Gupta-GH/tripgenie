@@ -4,6 +4,7 @@ import { Card, CardContent } from '../../components/Card';
 import { Loading } from '../../components/Loading';
 import { Modal } from '../../components/Modal';
 import { userService } from '../../services/userService';
+import { ADMIN_EMAIL } from '../../config/admin';
 import type { User, UserRole } from '../../types';
 import {
   Users,
@@ -16,6 +17,13 @@ import {
 } from 'lucide-react';
 
 const ROLES: UserRole[] = ['traveller', 'agent', 'admin'];
+
+function assignableRoles(user: User): UserRole[] {
+  if (user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+    return ['admin', 'traveller', 'agent'];
+  }
+  return ['traveller', 'agent'];
+}
 
 const ROLE_ICONS = {
   traveller: UserCheck,
@@ -68,7 +76,7 @@ export const UserManagement: React.FC = () => {
       setSelectedUser(null);
     } catch (error) {
       console.error('Error updating role:', error);
-      alert('Failed to update user role');
+      alert(error instanceof Error ? error.message : 'Failed to update user role');
     } finally {
       setIsUpdating(false);
     }
@@ -240,7 +248,7 @@ export const UserManagement: React.FC = () => {
             </p>
 
             <div className="space-y-2">
-              {ROLES.map((role) => {
+              {assignableRoles(selectedUser).map((role) => {
                 const RoleIcon = ROLE_ICONS[role];
                 return (
                   <button
