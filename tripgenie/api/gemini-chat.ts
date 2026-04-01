@@ -27,14 +27,22 @@ export default async function handler(
 
   const { message, history } = req.body;
 
+  // Log request for debugging in Vercel
+  console.log('Incoming Gemini request:', { message, historyLength: history?.length });
+
   if (!message) {
     return res.status(400).json({ error: 'Message is required' });
   }
 
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey || apiKey.includes('_here') || apiKey.length < 10) {
+    console.error('Invalid or missing GEMINI_API_KEY');
+    return res.status(500).json({ error: 'Gemini API key is not configured correctly in Vercel.' });
+  }
+
   try {
-    const model = genAI.getGenerativeModel({
-      model: process.env.GEMINI_MODEL || 'gemini-1.5-flash-latest',
-    });
+    const modelName = process.env.GEMINI_MODEL || 'gemini-1.5-flash-latest';
+    const model = genAI.getGenerativeModel({ model: modelName });
 
     // Format history for Gemini
     const formattedHistory =
