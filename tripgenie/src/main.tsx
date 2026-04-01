@@ -5,14 +5,16 @@ import './index.css'
 /** Each check must use a literal `import.meta.env.VITE_*` — Vite cannot replace dynamic keys. */
 function getMissingFirebaseEnv(): string[] {
   const missing: string[] = []
-  if (!import.meta.env.VITE_FIREBASE_API_KEY) missing.push('VITE_FIREBASE_API_KEY')
-  if (!import.meta.env.VITE_FIREBASE_AUTH_DOMAIN) missing.push('VITE_FIREBASE_AUTH_DOMAIN')
-  if (!import.meta.env.VITE_FIREBASE_PROJECT_ID) missing.push('VITE_FIREBASE_PROJECT_ID')
-  if (!import.meta.env.VITE_FIREBASE_STORAGE_BUCKET) missing.push('VITE_FIREBASE_STORAGE_BUCKET')
-  if (!import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID) {
+  const isPlaceholder = (val: any) => !val || val.includes('_here') || val.includes('your_')
+
+  if (isPlaceholder(import.meta.env.VITE_FIREBASE_API_KEY)) missing.push('VITE_FIREBASE_API_KEY')
+  if (isPlaceholder(import.meta.env.VITE_FIREBASE_AUTH_DOMAIN)) missing.push('VITE_FIREBASE_AUTH_DOMAIN')
+  if (isPlaceholder(import.meta.env.VITE_FIREBASE_PROJECT_ID)) missing.push('VITE_FIREBASE_PROJECT_ID')
+  if (isPlaceholder(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET)) missing.push('VITE_FIREBASE_STORAGE_BUCKET')
+  if (isPlaceholder(import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID)) {
     missing.push('VITE_FIREBASE_MESSAGING_SENDER_ID')
   }
-  if (!import.meta.env.VITE_FIREBASE_APP_ID) missing.push('VITE_FIREBASE_APP_ID')
+  if (isPlaceholder(import.meta.env.VITE_FIREBASE_APP_ID)) missing.push('VITE_FIREBASE_APP_ID')
   return missing
 }
 
