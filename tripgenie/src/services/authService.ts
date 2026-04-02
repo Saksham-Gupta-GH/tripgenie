@@ -2,6 +2,9 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence,
   updateProfile,
   onAuthStateChanged,
   sendPasswordResetEmail,
@@ -46,9 +49,13 @@ export const authService = {
     }
   },
 
-  login: async (email: string, password: string): Promise<User> => {
+  login: async (email: string, password: string, rememberMe: boolean = true): Promise<User> => {
     console.log('Auth: Logging in...', email);
     try {
+      await setPersistence(
+        auth,
+        rememberMe ? browserLocalPersistence : browserSessionPersistence
+      );
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const firebaseUser = userCredential.user;
 

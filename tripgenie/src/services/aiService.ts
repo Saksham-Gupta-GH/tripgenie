@@ -1,5 +1,4 @@
 import axios from 'axios';
-import type { ChatMessage } from '../types';
 
 const API_BASE_URL = ''; // Vercel handles /api routes automatically
 

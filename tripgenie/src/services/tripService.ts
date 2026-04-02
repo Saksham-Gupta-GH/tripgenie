@@ -236,14 +236,18 @@ export const tripService = {
     }
   },
 
-  updateTripStatus: async (tripId: string, status: TripStatus): Promise<void> => {
-    console.log('TripService: Updating trip status:', { tripId, status });
+  updateTripStatus: async (tripId: string, status: TripStatus, agentId?: string): Promise<void> => {
+    console.log('TripService: Updating trip status:', { tripId, status, agentId });
     try {
       const tripRef = doc(db, TRIPS_COLLECTION, tripId);
-      await updateDoc(tripRef, {
+      const updates: any = {
         status,
         updatedAt: serverTimestamp(),
-      });
+      };
+      if (agentId) {
+        updates.agentId = agentId;
+      }
+      await updateDoc(tripRef, updates);
     } catch (error: any) {
       console.error('TripService updateTripStatus Error:', error);
       throw new Error(error.message || 'Failed to update trip status');
