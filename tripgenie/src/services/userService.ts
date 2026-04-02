@@ -22,8 +22,8 @@ export const userService = {
 
       const data = userDoc.data();
       return {
-        id: userDoc.id,
         ...data,
+        id: userDoc.id,
         createdAt: data.createdAt?.toDate() || new Date(),
       } as User;
     } catch (error) {
@@ -43,8 +43,8 @@ export const userService = {
       return snapshot.docs.map((doc) => {
         const data = doc.data();
         return {
-          id: doc.id,
           ...data,
+          id: doc.id,
           createdAt: data.createdAt?.toDate() || new Date(),
         } as User;
       });
@@ -66,8 +66,8 @@ export const userService = {
       return snapshot.docs.map((doc) => {
         const data = doc.data();
         return {
-          id: doc.id,
           ...data,
+          id: doc.id,
           createdAt: data.createdAt?.toDate() || new Date(),
         } as User;
       });

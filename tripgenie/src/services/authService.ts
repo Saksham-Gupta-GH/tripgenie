@@ -67,8 +67,8 @@ export const authService = {
 
       const data = userDoc.data();
       return {
-        id: firebaseUser.uid,
         ...data,
+        id: firebaseUser.uid,
         createdAt: data.createdAt?.toDate() || new Date(),
       } as User;
     } catch (error: any) {
@@ -93,8 +93,8 @@ export const authService = {
       if (!userDoc.exists()) return null;
       const data = userDoc.data();
       return {
-        id: firebaseUser.uid,
         ...data,
+        id: firebaseUser.uid,
         createdAt: data.createdAt?.toDate() || new Date(),
       } as User;
     } catch (error) {
