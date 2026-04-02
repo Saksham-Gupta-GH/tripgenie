@@ -6,7 +6,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 export const aiService = {
   sendMessage: async (message: string, history: ChatMessage[]): Promise<string> => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/gemini-chat`, {
+      const response = await axios.post(`${API_BASE_URL}/api/chat`, {
         message,
         history: history
           .filter(msg => msg.id !== 'welcome' && msg.content !== 'I apologize, but I encountered an error. Please try again later.')

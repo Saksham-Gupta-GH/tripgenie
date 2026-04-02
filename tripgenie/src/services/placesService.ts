@@ -44,20 +44,25 @@ export const placesService = {
         createdAt: serverTimestamp(),
       });
 
+      console.log('Place created successfully:', placeRef.id);
+
       return {
         id: placeRef.id,
         ...placeData,
         images: [...placeData.images, ...imageUrls],
       };
     } catch (error) {
-      console.error('Error creating place:', error);
+      console.error('Detailed error in createPlace:', error);
       if (error && typeof error === 'object' && 'code' in error) {
         const code = (error as { code: string }).code;
         if (code === 'permission-denied') {
-          throw new Error('Permission denied. Please check your Firestore rules and ensure you are logged in as an Agent or Admin.');
+          throw new Error('Firestore Permission Denied: Ensure you are logged in as an Agent or Admin and your user document has the correct role.');
+        }
+        if (code === 'unimplemented') {
+          throw new Error('Firestore feature unimplemented. Check your configuration.');
         }
       }
-      throw new Error(error instanceof Error ? error.message : 'Failed to create place');
+      throw new Error(error instanceof Error ? error.message : 'An unknown error occurred while creating the place.');
     }
   },
 
@@ -182,6 +187,16 @@ export const placesService = {
       );
     } catch (error) {
       console.error('Error getting places by creator:', error);
+      if (error instanceof Error && error.message.includes('FAILED_PRECONDITION')) {
+        // This is usually a missing index error
+        console.warn('Firestore index missing for getPlacesByCreator. Falling back to un-ordered fetch.');
+        const q = query(
+          collection(db, PLACES_COLLECTION),
+          where('createdBy', '==', userId)
+        );
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Place));
+      }
       throw new Error('Failed to get places');
     }
   },
