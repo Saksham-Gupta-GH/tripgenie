@@ -102,7 +102,7 @@ const generateItinerary = (places: Place[], days: number): DayPlan[] => {
 
 export const tripService = {
   createTrip: async (
-    tripData: Omit<Trip, 'id' | 'createdAt' | 'updatedAt' | 'itinerary' | 'status'>,
+    tripData: Omit<Trip, 'id' | 'createdAt' | 'updatedAt' | 'itinerary' | 'status' | 'isPublic'> & { isPublic?: boolean },
     availablePlaces: Place[]
   ): Promise<Trip> => {
     console.log('TripService: Creating trip...', tripData.destination);
@@ -124,7 +124,8 @@ export const tripService = {
       const dataToSave = {
         ...tripData,
         itinerary,
-        status: 'draft' as TripStatus,
+        status: (tripData.isPublic ? 'approved' : 'draft') as TripStatus,
+        isPublic: tripData.isPublic || false,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       };
@@ -136,7 +137,8 @@ export const tripService = {
         id: tripRef.id,
         ...tripData,
         itinerary,
-        status: 'draft',
+        status: (tripData.isPublic ? 'approved' : 'draft') as TripStatus,
+        isPublic: tripData.isPublic || false,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -169,8 +171,7 @@ export const tripService = {
     try {
       const q = query(
         collection(db, TRIPS_COLLECTION),
-        where('userId', '==', userId),
-        orderBy('createdAt', 'desc')
+        where('userId', '==', userId)
       );
       const snapshot = await getDocs(q);
 
@@ -182,7 +183,7 @@ export const tripService = {
           createdAt: data.createdAt?.toDate() || new Date(),
           updatedAt: data.updatedAt?.toDate() || new Date(),
         } as Trip;
-      });
+      }).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
     } catch (error: any) {
       console.error('TripService GetByUser Error:', error);
       throw new Error(error.message || 'Failed to get user trips');
@@ -216,8 +217,7 @@ export const tripService = {
   getAllTrips: async (): Promise<Trip[]> => {
     try {
       const q = query(
-        collection(db, TRIPS_COLLECTION),
-        orderBy('createdAt', 'desc')
+        collection(db, TRIPS_COLLECTION)
       );
       const snapshot = await getDocs(q);
 
@@ -229,10 +229,70 @@ export const tripService = {
           createdAt: data.createdAt?.toDate() || new Date(),
           updatedAt: data.updatedAt?.toDate() || new Date(),
         } as Trip;
-      });
+      }).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
     } catch (error: any) {
       console.error('TripService GetAll Error:', error);
       throw new Error(error.message || 'Failed to get all trips');
+    }
+  },
+
+  getPublicTrips: async (): Promise<Trip[]> => {
+    console.log('TripService: Getting public trips');
+    try {
+      const q = query(
+        collection(db, TRIPS_COLLECTION),
+        where('isPublic', '==', true)
+      );
+      const snapshot = await getDocs(q);
+
+      return snapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt?.toDate() || new Date(),
+          updatedAt: data.updatedAt?.toDate() || new Date(),
+        } as Trip;
+      }).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    } catch (error: any) {
+      console.error('TripService GetPublic Error:', error);
+      throw new Error(error.message || 'Failed to get public trips');
+    }
+  },
+
+  cloneTrip: async (tripId: string, newUserId: string): Promise<Trip> => {
+    console.log('TripService: Cloning trip:', { tripId, newUserId });
+    try {
+      const originalTrip = await tripService.getTripById(tripId);
+      if (!originalTrip) throw new Error('Original trip not found');
+
+      const clonedData: Omit<Trip, 'id' | 'createdAt' | 'updatedAt'> = {
+        userId: newUserId,
+        destination: originalTrip.destination,
+        budget: originalTrip.budget,
+        days: originalTrip.days,
+        interests: originalTrip.interests,
+        itinerary: originalTrip.itinerary,
+        status: 'draft',
+        agentId: originalTrip.agentId,
+        isPublic: false, // Cloned trips are private by default
+      };
+
+      const tripRef = await addDoc(collection(db, TRIPS_COLLECTION), {
+        ...clonedData,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+
+      return {
+        id: tripRef.id,
+        ...clonedData,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+    } catch (error: any) {
+      console.error('TripService Clone Error:', error);
+      throw new Error(error.message || 'Failed to choose this plan');
     }
   },
 

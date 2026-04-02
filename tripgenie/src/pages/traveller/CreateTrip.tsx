@@ -44,7 +44,7 @@ export const CreateTrip: React.FC = () => {
 
   const loadPlaces = async () => {
     try {
-      const allPlaces = await placesService.getGlobalPlaces();
+      const allPlaces = await placesService.getAllPlaces();
       setPlaces(allPlaces);
     } catch (error) {
       console.error('Error loading places:', error);
@@ -73,10 +73,17 @@ export const CreateTrip: React.FC = () => {
           budget: formData.budget,
           days: formData.days,
           interests: formData.interests,
+          isPublic: user.role === 'agent', // Agents create public plans
         },
         places
       );
-      navigate(`/traveller/trip-details/${trip.id}`);
+      
+      if (user.role === 'agent') {
+        alert('Expert plan created successfully!');
+        navigate('/agent/dashboard');
+      } else {
+        navigate(`/traveller/trip-details/${trip.id}`);
+      }
     } catch (error) {
       console.error('Error creating trip:', error);
       alert('Failed to create trip. Please try again.');

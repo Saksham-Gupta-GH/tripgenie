@@ -130,6 +130,8 @@ export const ModifyTrip: React.FC = () => {
     setIsSaving(true);
     try {
       await tripService.updateItinerary(trip.id, trip.itinerary);
+      // Also update isPublic status
+      await tripService.updateTrip(trip.id, { isPublic: trip.isPublic });
       alert('Changes saved successfully!');
     } catch (error) {
       console.error('Error saving changes:', error);
@@ -137,6 +139,10 @@ export const ModifyTrip: React.FC = () => {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const togglePublic = () => {
+    setTrip(prev => prev ? { ...prev, isPublic: !prev.isPublic } : null);
   };
 
   const getStatusColor = (status: string) => {
@@ -240,6 +246,18 @@ export const ModifyTrip: React.FC = () => {
                 <div className="flex flex-wrap items-center gap-4 text-gray-600">
                   <span>{trip.days} days</span>
                   <span>${trip.budget} budget</span>
+                  <div className="flex items-center space-x-2 ml-2">
+                    <input
+                      type="checkbox"
+                      id="isPublic"
+                      checked={trip.isPublic || false}
+                      onChange={togglePublic}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <label htmlFor="isPublic" className="text-sm font-medium text-gray-700">
+                      Make Public (Visible to all travellers)
+                    </label>
+                  </div>
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">

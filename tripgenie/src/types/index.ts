@@ -58,6 +58,7 @@ export interface Trip {
   itinerary: DayPlan[];
   status: TripStatus;
   agentId?: string;
+  isPublic?: boolean; // If true, all travellers can see and choose this plan
   createdAt: Date;
   updatedAt: Date;
 }

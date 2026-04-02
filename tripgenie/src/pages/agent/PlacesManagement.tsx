@@ -92,7 +92,7 @@ export const PlacesManagement: React.FC = () => {
           estimatedCost: formData.estimatedCost,
           duration: formData.duration,
           createdBy: user.id,
-          isGlobal: false,
+          isGlobal: true, // Agent-created places are now global by default
         },
         imageFiles
       );
