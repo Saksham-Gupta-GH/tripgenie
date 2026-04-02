@@ -14,14 +14,12 @@ import { ForgotPassword } from './pages/ForgotPassword';
 
 // Traveller Pages
 import { TravellerDashboard } from './pages/traveller/Dashboard';
-import { CreateTrip } from './pages/traveller/CreateTrip';
 import { MyTrips } from './pages/traveller/MyTrips';
 import { TripDetails as TravellerTripDetails } from './pages/traveller/TripDetails';
 
 // Agent Pages
 import { AgentDashboard } from './pages/agent/Dashboard';
-import { TripRequests } from './pages/agent/TripRequests';
-import { ModifyTrip } from './pages/agent/ModifyTrip';
+import { CreatePlan } from './pages/agent/CreatePlan';
 import { PlacesManagement } from './pages/agent/PlacesManagement';
 
 // Admin Pages
@@ -51,14 +49,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/traveller/create-trip"
-            element={
-              <ProtectedRoute allowedRoles={['traveller']}>
-                <CreateTrip />
-              </ProtectedRoute>
-            }
-          />
+
           <Route
             path="/traveller/my-trips"
             element={
@@ -86,18 +77,10 @@ function App() {
             }
           />
           <Route
-            path="/agent/trip-requests"
+            path="/agent/create-plan"
             element={
               <ProtectedRoute allowedRoles={['agent']}>
-                <TripRequests />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/agent/modify-trip/:tripId"
-            element={
-              <ProtectedRoute allowedRoles={['agent']}>
-                <ModifyTrip />
+                <CreatePlan />
               </ProtectedRoute>
             }
           />

@@ -26,7 +26,7 @@ const INTEREST_OPTIONS = [
   'Photography',
 ];
 
-export const CreateTrip: React.FC = () => {
+export const CreatePlan: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
@@ -66,24 +66,20 @@ export const CreateTrip: React.FC = () => {
 
     setIsLoading(true);
     try {
-      const trip = await tripService.createTrip(
+      await tripService.createTrip(
         {
           userId: user.id,
           destination: formData.destination,
           budget: formData.budget,
           days: formData.days,
           interests: formData.interests,
-          isPublic: user.role === 'agent', // Agents create public plans
+          isPublic: true,
         },
         places
       );
       
-      if (user.role === 'agent') {
-        alert('Expert plan created successfully!');
-        navigate('/agent/dashboard');
-      } else {
-        navigate(`/traveller/trip-details/${trip.id}`);
-      }
+      alert('Expert plan created successfully!');
+      navigate('/agent/dashboard');
     } catch (error) {
       console.error('Error creating trip:', error);
       alert('Failed to create trip. Please try again.');
@@ -96,10 +92,9 @@ export const CreateTrip: React.FC = () => {
     <Layout>
       <div className="max-w-2xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Create New Trip</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Create Expert Plan</h1>
           <p className="text-gray-600 mt-1">
-            Tell us about your travel plans and we'll generate an itinerary for
-            you.
+            Build curated, expert travel itineraries for travellers to discover and enjoy.
           </p>
         </div>
 
@@ -209,9 +204,7 @@ export const CreateTrip: React.FC = () => {
                       How it works
                     </p>
                     <p className="text-sm text-blue-700 mt-1">
-                      Our system will generate an itinerary based on your
-                      preferences. The AI assistant in the sidebar can help you
-                      with destination suggestions and travel tips!
+                      Provide a destination, budget, and select key interests. The system will auto-generate an estimated itinerary that you can curate for travellers.
                     </p>
                   </div>
                 </div>
@@ -227,12 +220,12 @@ export const CreateTrip: React.FC = () => {
                     isLoading ? undefined : <ArrowRight className="w-4 h-4" />
                   }
                 >
-                  {isLoading ? 'Generating Itinerary...' : 'Create Trip'}
+                  {isLoading ? 'Generating Itinerary...' : 'Create Expert Plan'}
                 </Button>
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => navigate('/traveller/dashboard')}
+                  onClick={() => navigate('/agent/dashboard')}
                 >
                   Cancel
                 </Button>

@@ -11,10 +11,9 @@ import {
   Map,
   Calendar,
   DollarSign,
-  Plus,
   Trash2,
   Eye,
-  Filter,
+  Search,
 } from 'lucide-react';
 
 export const MyTrips: React.FC = () => {
@@ -22,7 +21,6 @@ export const MyTrips: React.FC = () => {
   const navigate = useNavigate();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [filter, setFilter] = useState<string>('all');
 
   const loadTrips = useCallback(async () => {
     if (!user) return;
@@ -41,7 +39,7 @@ export const MyTrips: React.FC = () => {
   }, [loadTrips]);
 
   const handleDeleteTrip = async (tripId: string) => {
-    if (!confirm('Are you sure you want to delete this trip?')) return;
+    if (!window.confirm('Are you sure you want to delete this trip from your list?')) return;
 
     try {
       await tripService.deleteTrip(tripId);
@@ -51,24 +49,6 @@ export const MyTrips: React.FC = () => {
       alert('Failed to delete trip');
     }
   };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'approved':
-        return 'bg-green-100 text-green-800';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'rejected':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const filteredTrips = trips.filter((trip) => {
-    if (filter === 'all') return true;
-    return trip.status === filter;
-  });
 
   if (isLoading) {
     return (
@@ -84,61 +64,41 @@ export const MyTrips: React.FC = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">My Trips</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Your Selected Trips</h1>
             <p className="text-gray-600 mt-1">
-              Manage and view all your travel plans
+              View and manage the expert travel plans you've selected
             </p>
           </div>
           <Button
-            leftIcon={<Plus className="w-4 h-4" />}
-            onClick={() => navigate('/traveller/create-trip')}
+            leftIcon={<Search className="w-4 h-4" />}
+            onClick={() => navigate('/traveller/dashboard')}
           >
-            Create New Trip
+            Discover More Plans
           </Button>
         </div>
 
-        {/* Filters */}
-        <div className="flex items-center space-x-2 overflow-x-auto pb-2">
-          <Filter className="w-4 h-4 text-gray-500 flex-shrink-0" />
-          {['all', 'draft', 'pending', 'approved', 'rejected'].map((status) => (
-            <button
-              key={status}
-              onClick={() => setFilter(status)}
-              className={`px-4 py-2 rounded-full text-sm font-medium capitalize whitespace-nowrap transition-all ${
-                filter === status
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              {status}
-            </button>
-          ))}
-        </div>
-
         {/* Trips List */}
-        {filteredTrips.length === 0 ? (
+        {trips.length === 0 ? (
           <Card>
             <CardContent className="p-12 text-center">
               <Map className="w-16 h-16 text-gray-300 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No trips found
+                No trips selected
               </h3>
               <p className="text-gray-500 mb-6">
-                {filter === 'all'
-                  ? "You haven't created any trips yet."
-                  : `No ${filter} trips found.`}
+                You haven't selected any expert travel plans yet.
               </p>
               <Button
-                onClick={() => navigate('/traveller/create-trip')}
-                leftIcon={<Plus className="w-4 h-4" />}
+                onClick={() => navigate('/traveller/dashboard')}
+                leftIcon={<Search className="w-4 h-4" />}
               >
-                Create Your First Trip
+                Discover Plans
               </Button>
             </CardContent>
           </Card>
         ) : (
           <div className="grid gap-4">
-            {filteredTrips.map((trip) => (
+            {trips.map((trip) => (
               <Card key={trip.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-5">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -147,13 +107,6 @@ export const MyTrips: React.FC = () => {
                         <h3 className="text-lg font-semibold text-gray-900">
                           {trip.destination}
                         </h3>
-                        <span
-                          className={`px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusColor(
-                            trip.status
-                          )}`}
-                        >
-                          {trip.status}
-                        </span>
                       </div>
                       <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
                         <span className="flex items-center">
@@ -172,7 +125,7 @@ export const MyTrips: React.FC = () => {
                           places
                         </span>
                       </div>
-                      {trip.interests.length > 0 && (
+                      {trip.interests && trip.interests.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-3">
                           {trip.interests.slice(0, 3).map((interest) => (
                             <span
@@ -209,7 +162,7 @@ export const MyTrips: React.FC = () => {
                         onClick={() => handleDeleteTrip(trip.id)}
                         className="text-red-600 hover:text-red-700 hover:bg-red-50"
                       >
-                        Delete
+                        Remove
                       </Button>
                     </div>
                   </div>

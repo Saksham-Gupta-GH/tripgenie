@@ -11,40 +11,36 @@ import type { Trip } from '../../types';
 import {
   List,
   MapPin,
-  Clock,
-  CheckCircle,
+
   ArrowRight,
   Briefcase,
   Sparkles,
+  Trash2,
+  Calendar,
+  DollarSign
 } from 'lucide-react';
 
 export const AgentDashboard: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [pendingTrips, setPendingTrips] = useState<Trip[]>([]);
+  const [agentTrips, setAgentTrips] = useState<Trip[]>([]);
   const [stats, setStats] = useState({
-    pendingCount: 0,
-    approvedCount: 0,
+    totalPlans: 0,
     totalPlaces: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
 
   const loadData = useCallback(async () => {
+    if (!user) return;
     try {
       const [trips, places] = await Promise.all([
-        tripService.getAllTrips(),
-        placesService.getPlacesByCreator(user?.id || ''),
+        tripService.getTripsByUser(user.id),
+        placesService.getPlacesByCreator(user.id),
       ]);
 
-      const pending = trips.filter((t) => t.status === 'pending');
-      const approved = trips.filter(
-        (t) => t.status === 'approved' && t.agentId === user?.id
-      );
-
-      setPendingTrips(pending.slice(0, 5));
+      setAgentTrips(trips);
       setStats({
-        pendingCount: pending.length,
-        approvedCount: approved.length,
+        totalPlans: trips.length,
         totalPlaces: places.length,
       });
     } catch (error) {
@@ -57,6 +53,20 @@ export const AgentDashboard: React.FC = () => {
   useEffect(() => {
     void loadData();
   }, [loadData]);
+
+  const handleDeletePlan = async (e: React.MouseEvent, tripId: string) => {
+    e.stopPropagation();
+    if (!window.confirm('Are you sure you want to delete this plan?')) return;
+    
+    try {
+      await tripService.deleteTrip(tripId);
+      setAgentTrips(prev => prev.filter(t => t.id !== tripId));
+      setStats(prev => ({ ...prev, totalPlans: prev.totalPlans - 1 }));
+    } catch (error) {
+      console.error('Failed to delete plan', error);
+      alert('Failed to delete plan.');
+    }
+  };
 
   if (isLoading) {
     return (
@@ -76,29 +86,29 @@ export const AgentDashboard: React.FC = () => {
               Welcome, {user?.name}!
             </h1>
             <p className="text-gray-600 mt-1">
-              Manage trip requests and curate travel experiences
+              Curate travel experiences and manage your plans
             </p>
           </div>
           <Button
             leftIcon={<Sparkles className="w-4 h-4" />}
-            onClick={() => navigate('/traveller/create-trip')}
+            onClick={() => navigate('/agent/create-plan')}
           >
             Create Expert Plan
           </Button>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
-                <div className="p-3 bg-yellow-100 rounded-lg">
-                  <Clock className="w-6 h-6 text-yellow-600" />
+                <div className="p-3 bg-blue-100 rounded-lg">
+                  <Briefcase className="w-6 h-6 text-blue-600" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm text-gray-600">Pending Requests</p>
+                  <p className="text-sm text-gray-600">Your Plans</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {stats.pendingCount}
+                    {stats.totalPlans}
                   </p>
                 </div>
               </div>
@@ -109,23 +119,7 @@ export const AgentDashboard: React.FC = () => {
             <CardContent className="p-6">
               <div className="flex items-center">
                 <div className="p-3 bg-green-100 rounded-lg">
-                  <CheckCircle className="w-6 h-6 text-green-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm text-gray-600">Approved by You</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {stats.approvedCount}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="p-3 bg-blue-100 rounded-lg">
-                  <MapPin className="w-6 h-6 text-blue-600" />
+                  <MapPin className="w-6 h-6 text-green-600" />
                 </div>
                 <div className="ml-4">
                   <p className="text-sm text-gray-600">Your Places</p>
@@ -138,42 +132,51 @@ export const AgentDashboard: React.FC = () => {
           </Card>
         </div>
 
-        {/* Pending Requests */}
+        {/* Your Plans */}
         <Card>
           <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <CardTitle>Pending Trip Requests</CardTitle>
-            <Button
-              variant="ghost"
-              size="sm"
-              rightIcon={<ArrowRight className="w-4 h-4" />}
-              onClick={() => navigate('/agent/trip-requests')}
-            >
-              View All
-            </Button>
+            <CardTitle>Your Created Plans</CardTitle>
           </CardHeader>
           <CardContent>
-            {pendingTrips.length === 0 ? (
+            {agentTrips.length === 0 ? (
               <div className="text-center py-8">
-                <Briefcase className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500">No pending trip requests</p>
+                <List className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-gray-500">You haven't created any plans yet</p>
               </div>
             ) : (
-              <div className="space-y-3">
-                {pendingTrips.map((trip) => (
+              <div className="space-y-4">
+                {agentTrips.map((trip) => (
                   <div
                     key={trip.id}
-                    onClick={() => navigate(`/agent/modify-trip/${trip.id}`)}
-                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                    onClick={() => navigate(`/traveller/trip-details/${trip.id}`)}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
                   >
                     <div>
                       <h3 className="font-medium text-gray-900">
                         {trip.destination}
                       </h3>
-                      <p className="text-sm text-gray-600">
-                        {trip.days} days • ${trip.budget}
-                      </p>
+                      <div className="flex items-center space-x-4 mt-1 text-sm text-gray-600">
+                        <span className="flex items-center">
+                          <Calendar className="w-4 h-4 mr-1" />
+                          {trip.days} days
+                        </span>
+                        <span className="flex items-center">
+                          <DollarSign className="w-4 h-4 mr-1" />${trip.budget}
+                        </span>
+                      </div>
                     </div>
-                    <ArrowRight className="w-5 h-5 text-gray-400" />
+                    <div className="flex items-center space-x-2 mt-4 sm:mt-0">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-red-600 border-red-200 hover:bg-red-50"
+                        leftIcon={<Trash2 className="w-4 h-4" />}
+                        onClick={(e) => handleDeletePlan(e, trip.id)}
+                      >
+                        Delete
+                      </Button>
+                      <ArrowRight className="w-5 h-5 text-gray-400 ml-2" />
+                    </div>
                   </div>
                 ))}
               </div>
@@ -182,28 +185,7 @@ export const AgentDashboard: React.FC = () => {
         </Card>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Card
-            className="cursor-pointer hover:shadow-md transition-shadow"
-            onClick={() => navigate('/agent/trip-requests')}
-          >
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-purple-100 rounded-lg">
-                  <List className="w-6 h-6 text-purple-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900">
-                    Review Trip Requests
-                  </h3>
-                  <p className="text-sm text-gray-600">
-                    View and manage traveller requests
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
+        <div className="grid grid-cols-1 sm:grid-cols-1 gap-4">
           <Card
             className="cursor-pointer hover:shadow-md transition-shadow"
             onClick={() => navigate('/agent/places')}
@@ -218,7 +200,7 @@ export const AgentDashboard: React.FC = () => {
                     Manage Places
                   </h3>
                   <p className="text-sm text-gray-600">
-                    Add and edit recommended places
+                    Add and edit recommended places for your itineraries
                   </p>
                 </div>
               </div>
