@@ -227,6 +227,16 @@ export const TravellerDashboard: React.FC = () => {
                     key={plan.id}
                     className="flex flex-col p-5 bg-purple-50 rounded-xl border border-purple-100 shadow-sm"
                   >
+                    {plan.imageUrls && plan.imageUrls.length > 0 && (
+                      <div className="mb-4 overflow-hidden rounded-lg border border-purple-100 bg-white">
+                        <img
+                          src={plan.imageUrls[0]}
+                          alt={`${plan.destination} preview`}
+                          className="h-36 w-full object-cover"
+                          loading="lazy"
+                        />
+                      </div>
+                    )}
                     <div className="flex items-start justify-between">
                       <div
                         className="cursor-pointer"
