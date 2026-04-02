@@ -8,6 +8,7 @@ import {
   query,
   where,
   serverTimestamp,
+  Timestamp,
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import type { Plan, SelectedPlan } from '../types';
@@ -106,7 +107,11 @@ export const tripService = {
   },
 
   // Traveller functions
-  selectPlan: async (userId: string, planId: string): Promise<SelectedPlan> => {
+  selectPlan: async (
+    userId: string,
+    planId: string,
+    travelDate: Date
+  ): Promise<SelectedPlan> => {
     try {
       // Check if already selected
       const q = query(
@@ -122,6 +127,7 @@ export const tripService = {
       const docRef = await addDoc(collection(db, SELECTED_PLANS_COLLECTION), {
         userId,
         planId,
+        travelDate: Timestamp.fromDate(travelDate),
         addedAt: serverTimestamp()
       });
 
@@ -129,6 +135,7 @@ export const tripService = {
         id: docRef.id,
         userId,
         planId,
+        travelDate,
         addedAt: new Date()
       };
     } catch (error: any) {

@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 
 export const AgentDashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { user, firebaseUser } = useAuth();
   const navigate = useNavigate();
   const [agentPlans, setAgentPlans] = useState<Plan[]>([]);
   const [stats, setStats] = useState({
@@ -27,9 +27,9 @@ export const AgentDashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   const loadData = useCallback(async () => {
-    if (!user) return;
+    if (!firebaseUser) return;
     try {
-      const plans = await tripService.getPlansByCreator(user.id);
+      const plans = await tripService.getPlansByCreator(firebaseUser.uid);
 
       setAgentPlans(plans);
       setStats({
@@ -40,7 +40,7 @@ export const AgentDashboard: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [user]);
+  }, [firebaseUser]);
 
   useEffect(() => {
     void loadData();

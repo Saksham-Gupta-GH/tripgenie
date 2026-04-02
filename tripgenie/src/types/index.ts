@@ -18,6 +18,7 @@ export interface Plan {
   numberOfDays: number;
   budget: number;
   itinerary: string[];
+  imageUrls?: string[];
   createdBy: string;
   createdAt: Date;
 }
@@ -26,6 +27,7 @@ export interface SelectedPlan {
   id: string;
   userId: string;
   planId: string;
+  travelDate: Date;
   addedAt: Date;
 }
 

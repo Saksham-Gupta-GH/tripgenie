@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 
 export const CreatePlan: React.FC = () => {
-  const { user } = useAuth();
+  const { user, firebaseUser } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -23,7 +23,8 @@ export const CreatePlan: React.FC = () => {
     destination: '',
     budget: 1000,
     numberOfDays: 3,
-    itinerary: ['', '', '']
+    itinerary: ['', '', ''],
+    imageUrlsText: ''
   });
 
   const handleDayChange = (index: number) => (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -47,7 +48,15 @@ export const CreatePlan: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user || !firebaseUser) {
+      alert('Please wait for authentication to finish, then try again.');
+      return;
+    }
+
+    const imageUrls = formData.imageUrlsText
+      .split('\n')
+      .map((url) => url.trim())
+      .filter(Boolean);
 
     setIsLoading(true);
     try {
@@ -57,7 +66,8 @@ export const CreatePlan: React.FC = () => {
         budget: formData.budget,
         numberOfDays: formData.numberOfDays,
         itinerary: formData.itinerary,
-        createdBy: user.id
+        imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
+        createdBy: firebaseUser.uid,
       });
       
       alert('Expert plan created successfully!');
@@ -123,6 +133,25 @@ export const CreatePlan: React.FC = () => {
                     placeholder="Where is this plan for? (e.g., Goa, Rajasthan)"
                   />
                 </div>
+              </div>
+
+              {/* Destination Images */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Destination Images (paste URLs)
+                </label>
+                <textarea
+                  value={formData.imageUrlsText}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, imageUrlsText: e.target.value }))
+                  }
+                  rows={3}
+                  className="w-full p-3 bg-white border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
+                  placeholder="Paste one image URL per line"
+                />
+                <p className="text-xs text-gray-500 mt-2">
+                  Example: https://example.com/paris-1.jpg
+                </p>
               </div>
 
               {/* Budget and Days */}

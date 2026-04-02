@@ -17,33 +17,33 @@ import {
 } from 'lucide-react';
 
 export const MyTrips: React.FC = () => {
-  const { user } = useAuth();
+  const { user, firebaseUser } = useAuth();
   const navigate = useNavigate();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const loadPlans = useCallback(async () => {
-    if (!user) return;
+    if (!firebaseUser) return;
     try {
-      const userPlans = await tripService.getSelectedPlansForUser(user.id);
+      const userPlans = await tripService.getSelectedPlansForUser(firebaseUser.uid);
       setPlans(userPlans);
     } catch (error) {
       console.error('Error loading plans:', error);
     } finally {
       setIsLoading(false);
     }
-  }, [user]);
+  }, [firebaseUser]);
 
   useEffect(() => {
     void loadPlans();
   }, [loadPlans]);
 
   const handleUnselectPlan = async (planId: string) => {
-    if (!user) return;
+    if (!firebaseUser) return;
     if (!window.confirm('Are you sure you want to remove this plan from your list?')) return;
 
     try {
-      await tripService.unselectPlan(user.id, planId);
+      await tripService.unselectPlan(firebaseUser.uid, planId);
       setPlans((prev) => prev.filter((p) => p.id !== planId));
     } catch (error) {
       console.error('Error removing plan:', error);

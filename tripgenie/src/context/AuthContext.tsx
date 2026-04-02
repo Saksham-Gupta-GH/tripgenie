@@ -7,6 +7,7 @@ import React, {
 } from 'react';
 import type { User, UserRole } from '../types';
 import { authService } from '../services/authService';
+import { auth } from '../firebase';
 import type { User as FirebaseUser } from 'firebase/auth';
 
 interface AuthContextType {
@@ -67,6 +68,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       const userData = await authService.login(email, password, rememberMe);
       setUser(userData);
+      setFirebaseUser(auth.currentUser);
     } finally {
       setIsLoading(false);
     }
@@ -82,6 +84,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       const userData = await authService.register(email, password, name, role);
       setUser(userData);
+      setFirebaseUser(auth.currentUser);
     } finally {
       setIsLoading(false);
     }
@@ -92,6 +95,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       await authService.logout();
       setUser(null);
+      setFirebaseUser(null);
     } finally {
       setIsLoading(false);
     }

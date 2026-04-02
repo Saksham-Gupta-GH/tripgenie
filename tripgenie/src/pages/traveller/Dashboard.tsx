@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Layout } from '../../components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/Card';
 import { Button } from '../../components/Button';
+import { Modal } from '../../components/Modal';
 import { Loading } from '../../components/Loading';
 import { tripService } from '../../services/tripService';
 import type { Plan } from '../../types';
@@ -17,19 +18,22 @@ import {
 } from 'lucide-react';
 
 export const TravellerDashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { user, firebaseUser } = useAuth();
   const navigate = useNavigate();
   const [myPlans, setMyPlans] = useState<Plan[]>([]);
   const [allPlans, setAllPlans] = useState<Plan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSelecting, setIsSelecting] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isDateModalOpen, setIsDateModalOpen] = useState(false);
+  const [pendingPlanId, setPendingPlanId] = useState<string | null>(null);
+  const [travelDate, setTravelDate] = useState('');
 
   const loadData = useCallback(async () => {
-    if (!user) return;
+    if (!firebaseUser) return;
     try {
       const [selectedPlans, publicPlans] = await Promise.all([
-        tripService.getSelectedPlansForUser(user.id),
+        tripService.getSelectedPlansForUser(firebaseUser.uid),
         tripService.getAllPlans(),
       ]);
       
@@ -41,19 +45,37 @@ export const TravellerDashboard: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [user]);
+  }, [firebaseUser]);
 
   useEffect(() => {
     void loadData();
   }, [loadData]);
 
-  const handleChoosePlan = async (planId: string) => {
-    if (!user) return;
-    setIsSelecting(planId);
+  const handleChoosePlan = (planId: string) => {
+    if (!firebaseUser) return;
+    setPendingPlanId(planId);
+    setTravelDate('');
+    setIsDateModalOpen(true);
+  };
+
+  const handleConfirmSelect = async () => {
+    if (!firebaseUser || !pendingPlanId) return;
+    if (!travelDate) {
+      alert('Please select a travel date.');
+      return;
+    }
+
+    setIsSelecting(pendingPlanId);
     try {
-      await tripService.selectPlan(user.id, planId);
+      await tripService.selectPlan(
+        firebaseUser.uid,
+        pendingPlanId,
+        new Date(`${travelDate}T00:00:00`)
+      );
+      setIsDateModalOpen(false);
+      setPendingPlanId(null);
       alert('Plan added to your trips!');
-      navigate(`/traveller/plan-details/${planId}`);
+      navigate(`/traveller/plan-details/${pendingPlanId}`);
     } catch (error: any) {
       console.error('Error choosing plan:', error);
       alert(error.message || 'Failed to select this plan. Please try again.');
@@ -247,6 +269,41 @@ export const TravellerDashboard: React.FC = () => {
           </CardContent>
         </Card>
       </div>
+      <Modal
+        isOpen={isDateModalOpen}
+        onClose={() => setIsDateModalOpen(false)}
+        title="Select Travel Date"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Travel Date
+            </label>
+            <input
+              type="date"
+              value={travelDate}
+              onChange={(e) => setTravelDate(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+              required
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={handleConfirmSelect}
+              isLoading={pendingPlanId ? isSelecting === pendingPlanId : false}
+            >
+              Confirm
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setIsDateModalOpen(false)}
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </Layout>
   );
 };

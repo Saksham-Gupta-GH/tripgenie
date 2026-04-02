@@ -102,6 +102,23 @@ export const PlanDetails: React.FC = () => {
                 </div>
               </div>
             </div>
+            {plan.imageUrls && plan.imageUrls.length > 0 && (
+              <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {plan.imageUrls.map((url, index) => (
+                  <div
+                    key={`${url}-${index}`}
+                    className="overflow-hidden rounded-lg border border-gray-200 bg-gray-50"
+                  >
+                    <img
+                      src={url}
+                      alt={`${plan.destination} ${index + 1}`}
+                      className="h-44 w-full object-cover"
+                      loading="lazy"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
