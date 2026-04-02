@@ -8,7 +8,6 @@ import {
   getDocs,
   query,
   where,
-  orderBy,
   serverTimestamp,
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';

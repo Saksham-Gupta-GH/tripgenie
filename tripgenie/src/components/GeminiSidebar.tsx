@@ -56,8 +56,7 @@ export const GeminiSidebar: React.FC<GeminiSidebarProps> = ({
 
     try {
       const response = await aiService.sendMessage(
-        userMessage.content,
-        messages
+        userMessage.content
       );
 
       const assistantMessage: ChatMessage = {

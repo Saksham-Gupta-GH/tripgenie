@@ -4,6 +4,7 @@ import {
   signOut,
   updateProfile,
   onAuthStateChanged,
+  sendPasswordResetEmail,
   type User as FirebaseUser,
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
@@ -97,5 +98,15 @@ export const authService = {
 
   onAuthStateChange: (callback: (user: FirebaseUser | null) => void) => {
     return onAuthStateChanged(auth, callback);
+  },
+
+  resetPassword: async (email: string): Promise<void> => {
+    console.log('Auth: Sending reset password email...', email);
+    try {
+      await sendPasswordResetEmail(auth, email);
+    } catch (error: any) {
+      console.error('Auth ResetPassword Error:', error);
+      throw new Error(error.message || 'Failed to send reset email');
+    }
   },
 };

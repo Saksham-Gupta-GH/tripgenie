@@ -235,4 +235,32 @@ export const tripService = {
       throw new Error(error.message || 'Failed to get all trips');
     }
   },
+
+  updateTripStatus: async (tripId: string, status: TripStatus): Promise<void> => {
+    console.log('TripService: Updating trip status:', { tripId, status });
+    try {
+      const tripRef = doc(db, TRIPS_COLLECTION, tripId);
+      await updateDoc(tripRef, {
+        status,
+        updatedAt: serverTimestamp(),
+      });
+    } catch (error: any) {
+      console.error('TripService updateTripStatus Error:', error);
+      throw new Error(error.message || 'Failed to update trip status');
+    }
+  },
+
+  updateItinerary: async (tripId: string, itinerary: DayPlan[]): Promise<void> => {
+    console.log('TripService: Updating itinerary:', tripId);
+    try {
+      const tripRef = doc(db, TRIPS_COLLECTION, tripId);
+      await updateDoc(tripRef, {
+        itinerary,
+        updatedAt: serverTimestamp(),
+      });
+    } catch (error: any) {
+      console.error('TripService updateItinerary Error:', error);
+      throw new Error(error.message || 'Failed to update itinerary');
+    }
+  },
 };
