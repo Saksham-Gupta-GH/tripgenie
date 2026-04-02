@@ -113,7 +113,8 @@ export const PlacesManagement: React.FC = () => {
       loadPlaces();
     } catch (error) {
       console.error('Error creating place:', error);
-      alert('Failed to create place');
+      const message = error instanceof Error ? error.message : 'Failed to create place';
+      alert(`Error: ${message}`);
     } finally {
       setIsSubmitting(false);
     }

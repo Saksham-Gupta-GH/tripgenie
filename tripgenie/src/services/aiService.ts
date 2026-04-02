@@ -20,10 +20,13 @@ export const aiService = {
     } catch (error) {
       console.error('Error sending message to AI:', error);
       if (axios.isAxiosError(error)) {
-        const message = error.response?.data?.error || error.response?.data?.details || error.message;
+        const serverError = error.response?.data?.error || error.response?.data?.reply || error.response?.data?.details;
+        const message = typeof serverError === 'string' 
+          ? serverError 
+          : (typeof serverError === 'object' ? JSON.stringify(serverError) : error.message);
         throw new Error(message);
       }
-      throw new Error('Failed to get AI response');
+      throw new Error(error instanceof Error ? error.message : 'Failed to get AI response');
     }
   },
 

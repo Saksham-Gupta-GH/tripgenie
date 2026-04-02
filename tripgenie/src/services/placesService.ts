@@ -44,7 +44,7 @@ export const placesService = {
         createdAt: serverTimestamp(),
       });
 
-      console.log('Place created successfully:', placeRef.id);
+      console.log('Place created successfully with ID:', placeRef.id);
 
       return {
         id: placeRef.id,
@@ -52,17 +52,21 @@ export const placesService = {
         images: [...placeData.images, ...imageUrls],
       };
     } catch (error) {
-      console.error('Detailed error in createPlace:', error);
+      console.error('CRITICAL: Error in createPlace:', error);
+      
+      // Handle Firebase specific errors
       if (error && typeof error === 'object' && 'code' in error) {
         const code = (error as { code: string }).code;
+        console.error(`Firebase Error Code: ${code}`);
+        
         if (code === 'permission-denied') {
-          throw new Error('Firestore Permission Denied: Ensure you are logged in as an Agent or Admin and your user document has the correct role.');
-        }
-        if (code === 'unimplemented') {
-          throw new Error('Firestore feature unimplemented. Check your configuration.');
+          throw new Error('PERMISSION_DENIED: You do not have permission to add places. Please ensure your account has the "Travel Agent" or "Admin" role in your profile.');
         }
       }
-      throw new Error(error instanceof Error ? error.message : 'An unknown error occurred while creating the place.');
+
+      // Re-throw with more context
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Failed to create place: ${errorMessage}`);
     }
   },
 
