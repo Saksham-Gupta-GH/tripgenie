@@ -218,7 +218,7 @@ export const PlacesManagement: React.FC = () => {
                     </span>
                     <span className="flex items-center">
                       <Clock className="w-4 h-4 mr-1" />
-                      {place.duration}h
+                      {place.duration} days
                     </span>
                   </div>
                 </CardContent>
@@ -307,7 +307,7 @@ export const PlacesManagement: React.FC = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Duration (hours)
+                Duration (days)
               </label>
               <input
                 type="number"

@@ -26,15 +26,16 @@ export const placesService = {
       const imageUrls: string[] = [];
 
       if (imageFiles && imageFiles.length > 0) {
-        for (const file of imageFiles) {
+        const uploadPromises = imageFiles.map(async (file) => {
           const storageRef = ref(
             storage,
             `${PLACE_IMAGES_PATH}/${Date.now()}_${file.name}`
           );
           await uploadBytes(storageRef, file);
-          const url = await getDownloadURL(storageRef);
-          imageUrls.push(url);
-        }
+          return getDownloadURL(storageRef);
+        });
+        const urls = await Promise.all(uploadPromises);
+        imageUrls.push(...urls);
       }
 
       const placeRef = await addDoc(collection(db, PLACES_COLLECTION), {
@@ -216,16 +217,15 @@ export const placesService = {
       const updateData: Record<string, unknown> = { ...updates };
 
       if (newImageFiles && newImageFiles.length > 0) {
-        const newImageUrls: string[] = [];
-        for (const file of newImageFiles) {
+        const uploadPromises = newImageFiles.map(async (file) => {
           const storageRef = ref(
             storage,
             `${PLACE_IMAGES_PATH}/${Date.now()}_${file.name}`
           );
           await uploadBytes(storageRef, file);
-          const url = await getDownloadURL(storageRef);
-          newImageUrls.push(url);
-        }
+          return getDownloadURL(storageRef);
+        });
+        const newImageUrls = await Promise.all(uploadPromises);
         updateData.images = [...(updates.images || []), ...newImageUrls];
       }
 

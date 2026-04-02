@@ -67,6 +67,10 @@ export const TravellerDashboard: React.FC = () => {
     plan.destination.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const uniqueDestinations = Array.from(
+    new Set(publicTrips.map((p) => p.destination))
+  ).sort();
+
   if (isLoading) {
     return (
       <Layout>
@@ -151,6 +155,36 @@ export const TravellerDashboard: React.FC = () => {
               />
             </div>
           </CardHeader>
+          {uniqueDestinations.length > 0 && (
+            <div className="px-6 pb-2">
+              <p className="text-sm text-gray-500 mb-2 font-medium">Browse by Destination:</p>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                    searchQuery === '' 
+                      ? 'bg-purple-600 text-white' 
+                      : 'bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200'
+                  }`}
+                >
+                  All Destinations
+                </button>
+                {uniqueDestinations.map(dest => (
+                  <button
+                    key={dest}
+                    onClick={() => setSearchQuery(dest)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                      searchQuery.toLowerCase() === dest.toLowerCase()
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200'
+                    }`}
+                  >
+                    {dest}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           <CardContent>
             {publicTrips.length === 0 ? (
               <div className="text-center py-8">

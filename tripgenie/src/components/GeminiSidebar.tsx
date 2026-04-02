@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { X, Send, Sparkles, Bot, User, Lightbulb } from 'lucide-react';
 import { aiService } from '../services/aiService';
 import type { ChatMessage } from '../types';
@@ -155,9 +156,9 @@ export const GeminiSidebar: React.FC<GeminiSidebarProps> = ({
                       {message.role === 'user' ? 'You' : 'AI Assistant'}
                     </span>
                   </div>
-                  <p className="text-sm whitespace-pre-wrap">
-                    {message.content}
-                  </p>
+                  <div className="text-sm prose prose-sm max-w-none">
+                    <ReactMarkdown>{message.content}</ReactMarkdown>
+                  </div>
                 </div>
               </div>
             ))}
