@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 
 export const MyTrips: React.FC = () => {
-  const { user, firebaseUser } = useAuth();
+  const { firebaseUser } = useAuth();
   const navigate = useNavigate();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
