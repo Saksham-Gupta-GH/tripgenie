@@ -1,32 +1,27 @@
 import axios from 'axios';
 import type { ChatMessage } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+const API_BASE_URL = ''; // Vercel handles /api routes automatically
 
 export const aiService = {
-  sendMessage: async (message: string, history: ChatMessage[]): Promise<string> => {
+  sendMessage: async (message: string): Promise<string> => {
+    console.log('AIService: Sending message to /api/gemini...', message);
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/chat`, {
+      const response = await axios.post(`${API_BASE_URL}/api/gemini`, {
         message,
-        history: history
-          .filter(msg => msg.id !== 'welcome' && msg.content !== 'I apologize, but I encountered an error. Please try again later.')
-          .map((msg) => ({
-            role: msg.role === 'assistant' ? 'assistant' : 'user',
-            content: msg.content,
-          })),
       });
 
-      return response.data.reply;
-    } catch (error) {
-      console.error('Error sending message to AI:', error);
-      if (axios.isAxiosError(error)) {
-        const serverError = error.response?.data?.error || error.response?.data?.reply || error.response?.data?.details;
-        const message = typeof serverError === 'string' 
-          ? serverError 
-          : (typeof serverError === 'object' ? JSON.stringify(serverError) : error.message);
-        throw new Error(message);
+      if (response.data && response.data.reply) {
+        return response.data.reply;
       }
-      throw new Error(error instanceof Error ? error.message : 'Failed to get AI response');
+      throw new Error('Invalid response format from AI server');
+    } catch (error: any) {
+      console.error('AIService: Detailed Error', error);
+      
+      const serverMessage = error.response?.data?.error || error.response?.data?.details?.message;
+      const finalMessage = serverMessage || error.message || 'AI request failed';
+      
+      throw new Error(finalMessage);
     }
   },
 
@@ -41,13 +36,7 @@ export const aiService = {
       ${season ? `Preferred season: ${season}.` : ''}
       Please provide destination recommendations with brief descriptions.`;
 
-    try {
-      const response = await aiService.sendMessage(prompt, []);
-      return response;
-    } catch (error) {
-      console.error('Error getting destination suggestions:', error);
-      throw new Error('Failed to get destination suggestions');
-    }
+    return aiService.sendMessage(prompt);
   },
 
   improveTravelPlan: async (
@@ -64,25 +53,13 @@ export const aiService = {
       
       Provide suggestions for optimization, better time management, and any missing highlights.`;
 
-    try {
-      const response = await aiService.sendMessage(prompt, []);
-      return response;
-    } catch (error) {
-      console.error('Error improving travel plan:', error);
-      throw new Error('Failed to improve travel plan');
-    }
+    return aiService.sendMessage(prompt);
   },
 
   getTravelTips: async (destination: string, interests: string[]): Promise<string> => {
     const prompt = `Provide travel tips for ${destination} focusing on: ${interests.join(', ')}.
       Include local customs, best times to visit, transportation tips, and safety advice.`;
 
-    try {
-      const response = await aiService.sendMessage(prompt, []);
-      return response;
-    } catch (error) {
-      console.error('Error getting travel tips:', error);
-      throw new Error('Failed to get travel tips');
-    }
+    return aiService.sendMessage(prompt);
   },
 };

@@ -2,67 +2,13 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
-  setPersistence,
-  browserLocalPersistence,
-  browserSessionPersistence,
-  sendPasswordResetEmail,
   updateProfile,
   onAuthStateChanged,
-  deleteUser,
   type User as FirebaseUser,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../firebase';
-import { ADMIN_EMAIL } from '../config/admin';
 import type { User, UserRole } from '../types';
-
-const AUTH_ERROR_MESSAGES: Record<string, string> = {
-  'auth/email-already-in-use': 'An account with this email already exists.',
-  'auth/invalid-email': 'Invalid email address.',
-  'auth/weak-password': 'Password should be at least 6 characters.',
-  'auth/user-not-found': 'No account found with this email.',
-  'auth/wrong-password': 'Incorrect password.',
-  'auth/invalid-credential': 'Invalid email or password.',
-  'auth/operation-not-allowed': 'Email/password sign-in is not enabled in Firebase.',
-};
-
-const FIRESTORE_ERROR_MESSAGES: Record<string, string> = {
-  'permission-denied':
-    'Could not save your profile (Firestore permission denied). In Firebase Console, open Firestore → Rules, publish the rules from this project’s firestore.rules file, and ensure the database exists.',
-  'failed-precondition': 'Firestore request failed. Check that Firestore is enabled for this project.',
-};
-
-function normalizeEmail(email: string): string {
-  return email.trim().toLowerCase();
-}
-
-/** Only ADMIN_EMAIL may register as admin; that email always becomes admin. */
-export function resolveRegisterRole(email: string, requested: UserRole): UserRole {
-  const e = normalizeEmail(email);
-  if (e === normalizeEmail(ADMIN_EMAIL)) return 'admin';
-  if (requested === 'admin') {
-    throw new Error('Administrator accounts cannot be created from sign-up. Use traveller or travel agent.');
-  }
-  return requested;
-}
-
-const getErrorMessage = (error: unknown): string => {
-  // Always log the error to console for debugging in production
-  console.error('Firebase Auth/Firestore Error:', error);
-
-  if (error && typeof error === 'object' && 'code' in error) {
-    const code = (error as { code: string }).code;
-    if (code.startsWith('auth/')) {
-      return AUTH_ERROR_MESSAGES[code] || `Authentication error (${code}).`;
-    }
-    if (code === 'permission-denied' || code === 'failed-precondition') {
-      return FIRESTORE_ERROR_MESSAGES[code];
-    }
-    return `Error (${code}).`;
-  }
-  if (error instanceof Error) return error.message;
-  return 'An unexpected error occurred. Please check the browser console for details.';
-};
 
 export const authService = {
   register: async (
@@ -71,135 +17,81 @@ export const authService = {
     name: string,
     role: UserRole
   ): Promise<User> => {
-    const resolvedRole = resolveRegisterRole(email, role);
-    const emailNorm = normalizeEmail(email);
-
-    let firebaseUser: FirebaseUser | null = null;
+    console.log('Auth: Registering user...', { email, role });
     try {
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-      firebaseUser = userCredential.user;
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const firebaseUser = userCredential.user;
 
       await updateProfile(firebaseUser, { displayName: name });
 
       const userData = {
-        email: emailNorm,
+        id: firebaseUser.uid,
+        email: email.toLowerCase(),
         name,
-        role: resolvedRole,
+        role,
         createdAt: serverTimestamp(),
       };
 
+      console.log('Auth: Creating Firestore user document...', userData);
       await setDoc(doc(db, 'users', firebaseUser.uid), userData);
 
       return {
-        id: firebaseUser.uid,
-        email: emailNorm,
-        name,
-        role: resolvedRole,
+        ...userData,
         createdAt: new Date(),
-      };
-    } catch (error) {
-      if (firebaseUser) {
-        try {
-          await deleteUser(firebaseUser);
-        } catch {
-          /* ignore rollback failure */
-        }
-      }
-      throw new Error(getErrorMessage(error));
+      } as User;
+    } catch (error: any) {
+      console.error('Auth Register Error:', error);
+      throw new Error(error.message || 'Registration failed');
     }
   },
 
-  login: async (email: string, password: string, rememberMe: boolean = true): Promise<User> => {
+  login: async (email: string, password: string): Promise<User> => {
+    console.log('Auth: Logging in...', email);
     try {
-      await setPersistence(
-        auth,
-        rememberMe ? browserLocalPersistence : browserSessionPersistence
-      );
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const firebaseUser = userCredential.user;
 
       const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
       if (!userDoc.exists()) {
-        throw new Error('User data not found.');
+        console.error('Auth: User document missing in Firestore');
+        throw new Error('User data not found in database.');
       }
 
-      const raw = userDoc.data();
-      const userData = {
-        ...raw,
-        createdAt:
-          raw.createdAt && typeof raw.createdAt === 'object' && 'toDate' in raw.createdAt
-            ? (raw.createdAt as { toDate: () => Date }).toDate()
-            : new Date(),
-      } as Omit<User, 'id'>;
-
+      const data = userDoc.data();
       return {
         id: firebaseUser.uid,
-        ...userData,
-      };
-    } catch (error) {
-      throw new Error(getErrorMessage(error));
+        ...data,
+        createdAt: data.createdAt?.toDate() || new Date(),
+      } as User;
+    } catch (error: any) {
+      console.error('Auth Login Error:', error);
+      throw new Error(error.message || 'Login failed');
     }
   },
 
   logout: async (): Promise<void> => {
+    console.log('Auth: Logging out...');
     try {
       await signOut(auth);
-    } catch (error) {
-      throw new Error(getErrorMessage(error));
-    }
-  },
-
-  resetPassword: async (email: string): Promise<void> => {
-    try {
-      await sendPasswordResetEmail(auth, email);
-    } catch (error) {
-      throw new Error(getErrorMessage(error));
+    } catch (error: any) {
+      console.error('Auth Logout Error:', error);
+      throw new Error(error.message || 'Logout failed');
     }
   },
 
   getCurrentUser: async (firebaseUser: FirebaseUser): Promise<User | null> => {
     try {
       const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-      if (!userDoc.exists()) {
-        return null;
-      }
-
-      const raw = userDoc.data();
-      const userData = {
-        ...raw,
-        createdAt:
-          raw.createdAt && typeof raw.createdAt === 'object' && 'toDate' in raw.createdAt
-            ? (raw.createdAt as { toDate: () => Date }).toDate()
-            : new Date(),
-      } as Omit<User, 'id'>;
-
+      if (!userDoc.exists()) return null;
+      const data = userDoc.data();
       return {
         id: firebaseUser.uid,
-        ...userData,
-      };
+        ...data,
+        createdAt: data.createdAt?.toDate() || new Date(),
+      } as User;
     } catch (error) {
-      console.error('Error getting current user:', error);
+      console.error('Auth GetCurrentUser Error:', error);
       return null;
-    }
-  },
-
-  updateUserProfile: async (
-    userId: string,
-    updates: Partial<Pick<User, 'name' | 'profileImage'>>
-  ): Promise<void> => {
-    try {
-      const userRef = doc(db, 'users', userId);
-      await updateDoc(userRef, updates);
-    } catch (error) {
-      throw new Error(getErrorMessage(error));
     }
   },
 

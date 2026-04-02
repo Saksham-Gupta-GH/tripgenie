@@ -105,31 +105,32 @@ export const tripService = {
     tripData: Omit<Trip, 'id' | 'createdAt' | 'updatedAt' | 'itinerary' | 'status'>,
     availablePlaces: Place[]
   ): Promise<Trip> => {
+    console.log('TripService: Creating trip...', tripData.destination);
     try {
-      // Filter places by interests and destination
       const relevantPlaces = availablePlaces.filter(
         (place) =>
-          place.category
-            .toLowerCase()
-            .includes(tripData.destination.toLowerCase()) ||
+          place.address.toLowerCase().includes(tripData.destination.toLowerCase()) ||
+          place.category.toLowerCase().includes(tripData.destination.toLowerCase()) ||
           tripData.interests.some((interest) =>
             place.category.toLowerCase().includes(interest.toLowerCase())
           )
       );
 
-      // Generate itinerary using system logic
       const itinerary = generateItinerary(
-        relevantPlaces.slice(0, tripData.days * 3), // Max 3 places per day
+        relevantPlaces.slice(0, tripData.days * 3),
         tripData.days
       );
 
-      const tripRef = await addDoc(collection(db, TRIPS_COLLECTION), {
+      const dataToSave = {
         ...tripData,
         itinerary,
         status: 'draft' as TripStatus,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
-      });
+      };
+
+      const tripRef = await addDoc(collection(db, TRIPS_COLLECTION), dataToSave);
+      console.log('TripService: Trip created successfully ID:', tripRef.id);
 
       return {
         id: tripRef.id,
@@ -139,9 +140,9 @@ export const tripService = {
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-    } catch (error) {
-      console.error('Error creating trip:', error);
-      throw new Error('Failed to create trip');
+    } catch (error: any) {
+      console.error('TripService Create Error:', error);
+      throw new Error(error.message || 'Failed to create trip');
     }
   },
 
@@ -157,13 +158,14 @@ export const tripService = {
         createdAt: data.createdAt?.toDate() || new Date(),
         updatedAt: data.updatedAt?.toDate() || new Date(),
       } as Trip;
-    } catch (error) {
-      console.error('Error getting trip:', error);
-      throw new Error('Failed to get trip');
+    } catch (error: any) {
+      console.error('TripService GetById Error:', error);
+      throw new Error(error.message || 'Failed to get trip');
     }
   },
 
   getTripsByUser: async (userId: string): Promise<Trip[]> => {
+    console.log('TripService: Getting trips for user:', userId);
     try {
       const q = query(
         collection(db, TRIPS_COLLECTION),
@@ -181,9 +183,33 @@ export const tripService = {
           updatedAt: data.updatedAt?.toDate() || new Date(),
         } as Trip;
       });
-    } catch (error) {
-      console.error('Error getting user trips:', error);
-      throw new Error('Failed to get trips');
+    } catch (error: any) {
+      console.error('TripService GetByUser Error:', error);
+      throw new Error(error.message || 'Failed to get user trips');
+    }
+  },
+
+  updateTrip: async (tripId: string, updates: Partial<Trip>): Promise<void> => {
+    console.log('TripService: Updating trip:', tripId);
+    try {
+      const tripRef = doc(db, TRIPS_COLLECTION, tripId);
+      await updateDoc(tripRef, {
+        ...updates,
+        updatedAt: serverTimestamp(),
+      });
+    } catch (error: any) {
+      console.error('TripService Update Error:', error);
+      throw new Error(error.message || 'Failed to update trip');
+    }
+  },
+
+  deleteTrip: async (tripId: string): Promise<void> => {
+    console.log('TripService: Deleting trip:', tripId);
+    try {
+      await deleteDoc(doc(db, TRIPS_COLLECTION, tripId));
+    } catch (error: any) {
+      console.error('TripService Delete Error:', error);
+      throw new Error(error.message || 'Failed to delete trip');
     }
   },
 
@@ -204,112 +230,9 @@ export const tripService = {
           updatedAt: data.updatedAt?.toDate() || new Date(),
         } as Trip;
       });
-    } catch (error) {
-      console.error('Error getting all trips:', error);
-      throw new Error('Failed to get trips');
-    }
-  },
-
-  getTripsByStatus: async (status: TripStatus): Promise<Trip[]> => {
-    try {
-      const q = query(
-        collection(db, TRIPS_COLLECTION),
-        where('status', '==', status),
-        orderBy('createdAt', 'desc')
-      );
-      const snapshot = await getDocs(q);
-
-      return snapshot.docs.map((doc) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-          createdAt: data.createdAt?.toDate() || new Date(),
-          updatedAt: data.updatedAt?.toDate() || new Date(),
-        } as Trip;
-      });
-    } catch (error) {
-      console.error('Error getting trips by status:', error);
-      throw new Error('Failed to get trips');
-    }
-  },
-
-  updateTrip: async (
-    tripId: string,
-    updates: Partial<Omit<Trip, 'id' | 'createdAt'>>
-  ): Promise<void> => {
-    try {
-      const tripRef = doc(db, TRIPS_COLLECTION, tripId);
-      await updateDoc(tripRef, {
-        ...updates,
-        updatedAt: serverTimestamp(),
-      });
-    } catch (error) {
-      console.error('Error updating trip:', error);
-      throw new Error('Failed to update trip');
-    }
-  },
-
-  updateTripStatus: async (
-    tripId: string,
-    status: TripStatus,
-    agentId?: string
-  ): Promise<void> => {
-    try {
-      const tripRef = doc(db, TRIPS_COLLECTION, tripId);
-      const updates: Record<string, unknown> = {
-        status,
-        updatedAt: serverTimestamp(),
-      };
-      if (agentId) {
-        updates.agentId = agentId;
-      }
-      await updateDoc(tripRef, updates);
-    } catch (error) {
-      console.error('Error updating trip status:', error);
-      throw new Error('Failed to update trip status');
-    }
-  },
-
-  updateItinerary: async (
-    tripId: string,
-    itinerary: DayPlan[]
-  ): Promise<void> => {
-    try {
-      const tripRef = doc(db, TRIPS_COLLECTION, tripId);
-      await updateDoc(tripRef, {
-        itinerary,
-        updatedAt: serverTimestamp(),
-      });
-    } catch (error) {
-      console.error('Error updating itinerary:', error);
-      throw new Error('Failed to update itinerary');
-    }
-  },
-
-  deleteTrip: async (tripId: string): Promise<void> => {
-    try {
-      await deleteDoc(doc(db, TRIPS_COLLECTION, tripId));
-    } catch (error) {
-      console.error('Error deleting trip:', error);
-      throw new Error('Failed to delete trip');
-    }
-  },
-
-  // Helper function to regenerate itinerary
-  regenerateItinerary: async (
-    tripId: string,
-    places: Place[]
-  ): Promise<void> => {
-    try {
-      const trip = await tripService.getTripById(tripId);
-      if (!trip) throw new Error('Trip not found');
-
-      const newItinerary = generateItinerary(places, trip.days);
-      await tripService.updateItinerary(tripId, newItinerary);
-    } catch (error) {
-      console.error('Error regenerating itinerary:', error);
-      throw new Error('Failed to regenerate itinerary');
+    } catch (error: any) {
+      console.error('TripService GetAll Error:', error);
+      throw new Error(error.message || 'Failed to get all trips');
     }
   },
 };
