@@ -6,7 +6,7 @@ import { Card, CardContent } from '../../components/Card';
 import { Button } from '../../components/Button';
 import { Loading } from '../../components/Loading';
 import { tripService } from '../../services/tripService';
-import type { Trip } from '../../types';
+import type { Plan } from '../../types';
 import {
   Map,
   Calendar,
@@ -19,34 +19,35 @@ import {
 export const MyTrips: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [trips, setTrips] = useState<Trip[]>([]);
+  const [plans, setPlans] = useState<Plan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const loadTrips = useCallback(async () => {
+  const loadPlans = useCallback(async () => {
     if (!user) return;
     try {
-      const userTrips = await tripService.getTripsByUser(user.id);
-      setTrips(userTrips);
+      const userPlans = await tripService.getSelectedPlansForUser(user.id);
+      setPlans(userPlans);
     } catch (error) {
-      console.error('Error loading trips:', error);
+      console.error('Error loading plans:', error);
     } finally {
       setIsLoading(false);
     }
   }, [user]);
 
   useEffect(() => {
-    void loadTrips();
-  }, [loadTrips]);
+    void loadPlans();
+  }, [loadPlans]);
 
-  const handleDeleteTrip = async (tripId: string) => {
-    if (!window.confirm('Are you sure you want to delete this trip from your list?')) return;
+  const handleUnselectPlan = async (planId: string) => {
+    if (!user) return;
+    if (!window.confirm('Are you sure you want to remove this plan from your list?')) return;
 
     try {
-      await tripService.deleteTrip(tripId);
-      setTrips((prev) => prev.filter((t) => t.id !== tripId));
+      await tripService.unselectPlan(user.id, planId);
+      setPlans((prev) => prev.filter((p) => p.id !== planId));
     } catch (error) {
-      console.error('Error deleting trip:', error);
-      alert('Failed to delete trip');
+      console.error('Error removing plan:', error);
+      alert('Failed to remove plan');
     }
   };
 
@@ -64,7 +65,7 @@ export const MyTrips: React.FC = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Your Selected Trips</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Your Selected Plans</h1>
             <p className="text-gray-600 mt-1">
               View and manage the expert travel plans you've selected
             </p>
@@ -77,13 +78,13 @@ export const MyTrips: React.FC = () => {
           </Button>
         </div>
 
-        {/* Trips List */}
-        {trips.length === 0 ? (
+        {/* Plans List */}
+        {plans.length === 0 ? (
           <Card>
             <CardContent className="p-12 text-center">
               <Map className="w-16 h-16 text-gray-300 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No trips selected
+                No plans selected
               </h3>
               <p className="text-gray-500 mb-6">
                 You haven't selected any expert travel plans yet.
@@ -98,50 +99,32 @@ export const MyTrips: React.FC = () => {
           </Card>
         ) : (
           <div className="grid gap-4">
-            {trips.map((trip) => (
-              <Card key={trip.id} className="hover:shadow-md transition-shadow">
+            {plans.map((plan) => (
+              <Card key={plan.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-5">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex items-center space-x-3 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900">
-                          {trip.destination}
+                        <h3 className="text-lg font-bold text-gray-900">
+                          {plan.title}
                         </h3>
                       </div>
+                      <p className="text-gray-700 font-medium mb-3">
+                        {plan.destination}
+                      </p>
                       <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
                         <span className="flex items-center">
                           <Calendar className="w-4 h-4 mr-1" />
-                          {trip.days} days
+                          {plan.numberOfDays} days
                         </span>
                         <span className="flex items-center">
-                          <DollarSign className="w-4 h-4 mr-1" />${trip.budget}
+                          <DollarSign className="w-4 h-4 mr-1" />${plan.budget}
                         </span>
                         <span className="flex items-center">
                           <Map className="w-4 h-4 mr-1" />
-                          {trip.itinerary.reduce(
-                            (acc, day) => acc + day.items.length,
-                            0
-                          )}{' '}
-                          places
+                          {plan.itinerary.length} days planned
                         </span>
                       </div>
-                      {trip.interests && trip.interests.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-3">
-                          {trip.interests.slice(0, 3).map((interest) => (
-                            <span
-                              key={interest}
-                              className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full"
-                            >
-                              {interest}
-                            </span>
-                          ))}
-                          {trip.interests.length > 3 && (
-                            <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-                              +{trip.interests.length - 3} more
-                            </span>
-                          )}
-                        </div>
-                      )}
                     </div>
 
                     <div className="flex items-center space-x-2">
@@ -150,7 +133,7 @@ export const MyTrips: React.FC = () => {
                         size="sm"
                         leftIcon={<Eye className="w-4 h-4" />}
                         onClick={() =>
-                          navigate(`/traveller/trip-details/${trip.id}`)
+                          navigate(`/traveller/plan-details/${plan.id}`)
                         }
                       >
                         View
@@ -159,7 +142,7 @@ export const MyTrips: React.FC = () => {
                         variant="ghost"
                         size="sm"
                         leftIcon={<Trash2 className="w-4 h-4" />}
-                        onClick={() => handleDeleteTrip(trip.id)}
+                        onClick={() => handleUnselectPlan(plan.id)}
                         className="text-red-600 hover:text-red-700 hover:bg-red-50"
                       >
                         Remove

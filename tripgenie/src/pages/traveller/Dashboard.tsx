@@ -6,9 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/Card'
 import { Button } from '../../components/Button';
 import { Loading } from '../../components/Loading';
 import { tripService } from '../../services/tripService';
-import type { Trip } from '../../types';
+import type { Plan } from '../../types';
 import {
-
   Calendar,
   DollarSign,
   ArrowRight,
@@ -20,22 +19,22 @@ import {
 export const TravellerDashboard: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [myTrips, setMyTrips] = useState<Trip[]>([]);
-  const [publicTrips, setPublicTrips] = useState<Trip[]>([]);
+  const [myPlans, setMyPlans] = useState<Plan[]>([]);
+  const [allPlans, setAllPlans] = useState<Plan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isCloning, setIsCloning] = useState<string | null>(null);
+  const [isSelecting, setIsSelecting] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   const loadData = useCallback(async () => {
     if (!user) return;
     try {
-      const [userTrips, allPublicTrips] = await Promise.all([
-        tripService.getTripsByUser(user.id),
-        tripService.getPublicTrips(),
+      const [selectedPlans, publicPlans] = await Promise.all([
+        tripService.getSelectedPlansForUser(user.id),
+        tripService.getAllPlans(),
       ]);
       
-      setMyTrips(userTrips);
-      setPublicTrips(allPublicTrips.filter(t => t.userId !== user.id)); // Don't show own public trips if any
+      setMyPlans(selectedPlans);
+      setAllPlans(publicPlans);
       
     } catch (error) {
       console.error('Error loading dashboard data:', error);
@@ -48,27 +47,27 @@ export const TravellerDashboard: React.FC = () => {
     void loadData();
   }, [loadData]);
 
-  const handleChoosePlan = async (tripId: string) => {
+  const handleChoosePlan = async (planId: string) => {
     if (!user) return;
-    setIsCloning(tripId);
+    setIsSelecting(planId);
     try {
-      const clonedTrip = await tripService.cloneTrip(tripId, user.id);
+      await tripService.selectPlan(user.id, planId);
       alert('Plan added to your trips!');
-      navigate(`/traveller/trip-details/${clonedTrip.id}`);
-    } catch (error) {
+      navigate(`/traveller/plan-details/${planId}`);
+    } catch (error: any) {
       console.error('Error choosing plan:', error);
-      alert('Failed to choose this plan. Please try again.');
+      alert(error.message || 'Failed to select this plan. Please try again.');
     } finally {
-      setIsCloning(null);
+      setIsSelecting(null);
     }
   };
 
-  const filteredPlans = publicTrips.filter(plan => 
+  const filteredPlans = allPlans.filter(plan => 
     plan.destination.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const uniqueDestinations = Array.from(
-    new Set(publicTrips.map((p) => p.destination))
+    new Set(allPlans.map((p) => p.destination))
   ).sort();
 
   if (isLoading) {
@@ -79,7 +78,7 @@ export const TravellerDashboard: React.FC = () => {
     );
   }
 
-  const recentTrips = myTrips.slice(0, 3);
+  const recentPlans = myPlans.slice(0, 3);
 
   return (
     <Layout>
@@ -97,10 +96,10 @@ export const TravellerDashboard: React.FC = () => {
         </div>
 
         {/* Selected Trips */}
-        {recentTrips.length > 0 && (
+        {recentPlans.length > 0 && (
           <Card>
             <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <CardTitle>Your Selected Trips</CardTitle>
+              <CardTitle>Your Selected Plans</CardTitle>
               <Button
                 variant="ghost"
                 size="sm"
@@ -112,22 +111,25 @@ export const TravellerDashboard: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                {recentTrips.map((trip) => (
+                {recentPlans.map((plan) => (
                   <div
-                    key={trip.id}
-                    onClick={() => navigate(`/traveller/trip-details/${trip.id}`)}
+                    key={plan.id}
+                    onClick={() => navigate(`/traveller/plan-details/${plan.id}`)}
                     className="flex flex-col p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
                   >
-                    <h3 className="font-medium text-gray-900 truncate">
-                      {trip.destination}
+                    <h3 className="font-bold text-gray-900 truncate">
+                      {plan.title}
                     </h3>
+                    <h4 className="font-medium text-gray-700 truncate mt-1">
+                      {plan.destination}
+                    </h4>
                     <div className="flex items-center space-x-4 mt-2 text-sm text-gray-600">
                       <span className="flex items-center">
                         <Calendar className="w-4 h-4 mr-1" />
-                        {trip.days} days
+                        {plan.numberOfDays} days
                       </span>
                       <span className="flex items-center">
-                        <DollarSign className="w-4 h-4 mr-1" />${trip.budget}
+                        <DollarSign className="w-4 h-4 mr-1" />${plan.budget}
                       </span>
                     </div>
                   </div>
@@ -186,7 +188,7 @@ export const TravellerDashboard: React.FC = () => {
             </div>
           )}
           <CardContent>
-            {publicTrips.length === 0 ? (
+            {allPlans.length === 0 ? (
               <div className="text-center py-8">
                 <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                 <p className="text-gray-500">No expert plans available at the moment.</p>
@@ -198,19 +200,22 @@ export const TravellerDashboard: React.FC = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredPlans.map((trip) => (
+                {filteredPlans.map((plan) => (
                   <div
-                    key={trip.id}
+                    key={plan.id}
                     className="flex flex-col p-5 bg-purple-50 rounded-xl border border-purple-100 shadow-sm"
                   >
                     <div className="flex items-start justify-between">
                       <div
                         className="cursor-pointer"
-                        onClick={() => navigate(`/traveller/trip-details/${trip.id}`)}
+                        onClick={() => navigate(`/traveller/plan-details/${plan.id}`)}
                       >
                         <h3 className="font-bold text-lg text-gray-900 group-hover:text-purple-700 transition-colors">
-                          {trip.destination}
+                          {plan.title}
                         </h3>
+                        <p className="text-sm font-medium text-gray-700 mt-1">
+                          {plan.destination}
+                        </p>
                         <p className="text-xs text-purple-600 font-semibold mt-1">
                           Curated by Expert Agent
                         </p>
@@ -218,8 +223,8 @@ export const TravellerDashboard: React.FC = () => {
                       <Button
                         size="sm"
                         variant="primary"
-                        isLoading={isCloning === trip.id}
-                        onClick={() => handleChoosePlan(trip.id)}
+                        isLoading={isSelecting === plan.id}
+                        onClick={() => handleChoosePlan(plan.id)}
                       >
                         Select Plan
                       </Button>
@@ -228,20 +233,12 @@ export const TravellerDashboard: React.FC = () => {
                     <div className="flex items-center space-x-6 mt-4 text-sm text-gray-700">
                       <span className="flex items-center">
                         <Calendar className="w-4 h-4 mr-1.5 text-purple-600" />
-                        {trip.days} <span className="text-gray-500 ml-1">days</span>
+                        {plan.numberOfDays} <span className="text-gray-500 ml-1">days</span>
                       </span>
                       <span className="flex items-center">
                         <DollarSign className="w-4 h-4 mr-1.5 text-purple-600" />
-                        {trip.budget} <span className="text-gray-500 ml-1">est.</span>
+                        {plan.budget} <span className="text-gray-500 ml-1">est.</span>
                       </span>
-                    </div>
-
-                    <div className="mt-4 pt-4 border-t border-purple-100 flex flex-wrap gap-2">
-                       {trip.interests && trip.interests.map(interest => (
-                         <span key={interest} className="px-2.5 py-1 bg-white text-purple-700 text-xs rounded-md border border-purple-100">
-                           {interest}
-                         </span>
-                       ))}
                     </div>
                   </div>
                 ))}
@@ -249,7 +246,6 @@ export const TravellerDashboard: React.FC = () => {
             )}
           </CardContent>
         </Card>
-
       </div>
     </Layout>
   );

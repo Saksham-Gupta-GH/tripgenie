@@ -6,11 +6,9 @@ import { Card, CardContent } from '../../components/Card';
 import { Loading } from '../../components/Loading';
 import { tripService } from '../../services/tripService';
 import { userService } from '../../services/userService';
-import { placesService } from '../../services/placesService';
 import {
   Users,
   Map,
-  MapPin,
   UserCheck,
   Briefcase,
   Shield,
@@ -25,8 +23,7 @@ export const AdminDashboard: React.FC = () => {
     travellers: 0,
     agents: 0,
     admins: 0,
-    totalTrips: 0,
-    totalPlaces: 0,
+    totalPlans: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -36,16 +33,14 @@ export const AdminDashboard: React.FC = () => {
 
   const loadStats = async () => {
     try {
-      const [userStats, trips, places] = await Promise.all([
+      const [userStats, plans] = await Promise.all([
         userService.getUserStats(),
-        tripService.getAllTrips(),
-        placesService.getAllPlaces(),
+        tripService.getAllPlans(),
       ]);
 
       setStats({
         ...userStats,
-        totalTrips: trips.length,
-        totalPlaces: places.length,
+        totalPlans: plans.length,
       });
     } catch (error) {
       console.error('Error loading stats:', error);
@@ -76,7 +71,7 @@ export const AdminDashboard: React.FC = () => {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
@@ -100,25 +95,9 @@ export const AdminDashboard: React.FC = () => {
                   <Map className="w-6 h-6 text-green-600" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm text-gray-600">Total Trips</p>
+                  <p className="text-sm text-gray-600">Total Plans</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {stats.totalTrips}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="p-3 bg-purple-100 rounded-lg">
-                  <MapPin className="w-6 h-6 text-purple-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm text-gray-600">Total Places</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {stats.totalPlaces}
+                    {stats.totalPlans}
                   </p>
                 </div>
               </div>
@@ -181,7 +160,7 @@ export const AdminDashboard: React.FC = () => {
         </Card>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Card
             className="cursor-pointer hover:shadow-md transition-shadow"
             onClick={() => navigate('/admin/users')}
@@ -217,33 +196,9 @@ export const AdminDashboard: React.FC = () => {
                     <Map className="w-6 h-6 text-green-600" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900">All Trips</h3>
+                    <h3 className="font-semibold text-gray-900">All Plans</h3>
                     <p className="text-sm text-gray-600">
-                      View all trips in system
-                    </p>
-                  </div>
-                </div>
-                <ArrowRight className="w-5 h-5 text-gray-400" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card
-            className="cursor-pointer hover:shadow-md transition-shadow"
-            onClick={() => navigate('/admin/places')}
-          >
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="p-3 bg-purple-100 rounded-lg">
-                    <MapPin className="w-6 h-6 text-purple-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">
-                      Global Places
-                    </h3>
-                    <p className="text-sm text-gray-600">
-                      Manage destinations
+                      View all plans in system
                     </p>
                   </div>
                 </div>

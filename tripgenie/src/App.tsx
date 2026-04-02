@@ -15,18 +15,16 @@ import { ForgotPassword } from './pages/ForgotPassword';
 // Traveller Pages
 import { TravellerDashboard } from './pages/traveller/Dashboard';
 import { MyTrips } from './pages/traveller/MyTrips';
-import { TripDetails as TravellerTripDetails } from './pages/traveller/TripDetails';
+import { PlanDetails as TravellerPlanDetails } from './pages/traveller/PlanDetails';
 
 // Agent Pages
 import { AgentDashboard } from './pages/agent/Dashboard';
 import { CreatePlan } from './pages/agent/CreatePlan';
-import { PlacesManagement } from './pages/agent/PlacesManagement';
 
 // Admin Pages
 import { AdminDashboard } from './pages/admin/Dashboard';
 import { UserManagement } from './pages/admin/UserManagement';
 import { AllTrips } from './pages/admin/AllTrips';
-import { GlobalPlaces } from './pages/admin/GlobalPlaces';
 
 import './styles/globals.css';
 
@@ -59,10 +57,10 @@ function App() {
             }
           />
           <Route
-            path="/traveller/trip-details/:tripId"
+            path="/traveller/plan-details/:planId"
             element={
               <ProtectedRoute allowedRoles={['traveller']}>
-                <TravellerTripDetails />
+                <TravellerPlanDetails />
               </ProtectedRoute>
             }
           />
@@ -84,14 +82,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/agent/places"
-            element={
-              <ProtectedRoute allowedRoles={['agent']}>
-                <PlacesManagement />
-              </ProtectedRoute>
-            }
-          />
+
 
           {/* Admin Routes */}
           <Route
@@ -118,14 +109,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/admin/places"
-            element={
-              <ProtectedRoute allowedRoles={['admin']}>
-                <GlobalPlaces />
-              </ProtectedRoute>
-            }
-          />
+
 
           {/* Default Routes */}
           <Route path="/" element={<Navigate to="/login" replace />} />

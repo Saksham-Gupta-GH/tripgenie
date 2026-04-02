@@ -2,7 +2,6 @@ import {
   collection,
   doc,
   addDoc,
-  updateDoc,
   deleteDoc,
   getDoc,
   getDocs,
@@ -11,166 +10,56 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { db } from '../firebase';
-import type { Trip, TripStatus, DayPlan, ItineraryItem, Place } from '../types';
+import type { Plan, SelectedPlan } from '../types';
 
-const TRIPS_COLLECTION = 'trips';
-
-// Group places by proximity using a simple clustering algorithm
-const groupPlacesByProximity = (
-  places: Place[],
-  numDays: number
-): Place[][] => {
-  if (places.length === 0 || numDays === 0) return [];
-
-  // Sort places by latitude for initial grouping
-  const sortedPlaces = [...places].sort(
-    (a, b) => a.location.lat - b.location.lat
-  );
-
-  const groups: Place[][] = Array.from({ length: numDays }, () => []);
-  const placesPerDay = Math.ceil(sortedPlaces.length / numDays);
-
-  // Distribute places evenly across days
-  sortedPlaces.forEach((place, index) => {
-    const dayIndex = Math.min(Math.floor(index / placesPerDay), numDays - 1);
-    groups[dayIndex].push(place);
-  });
-
-  // Optimize by checking distances and swapping if beneficial
-  for (let day = 0; day < numDays; day++) {
-    const dayPlaces = groups[day];
-    if (dayPlaces.length <= 1) continue;
-
-    // Sort within each day by longitude for a logical route
-    dayPlaces.sort((a, b) => a.location.lng - b.location.lng);
-  }
-
-  return groups;
-};
-
-// Generate time slots for itinerary items
-const generateTimeSlots = (numItems: number): { start: string; end: string }[] => {
-  const slots: { start: string; end: string }[] = [];
-  let currentHour = 9; // Start at 9 AM
-
-  for (let i = 0; i < numItems; i++) {
-    const duration = 2; // Default 2 hours per place
-    const startTime = `${currentHour.toString().padStart(2, '0')}:00`;
-    const endTime = `${(currentHour + duration).toString().padStart(2, '0')}:00`;
-
-    slots.push({ start: startTime, end: endTime });
-    currentHour += duration + 1; // 1 hour break between places
-
-    // Lunch break
-    if (currentHour === 13) {
-      currentHour = 14;
-    }
-
-    // End by 8 PM
-    if (currentHour >= 20) {
-      break;
-    }
-  }
-
-  return slots;
-};
-
-// Generate itinerary from places
-const generateItinerary = (places: Place[], days: number): DayPlan[] => {
-  const groupedPlaces = groupPlacesByProximity(places, days);
-  const itinerary: DayPlan[] = [];
-
-  groupedPlaces.forEach((dayPlaces, index) => {
-    const timeSlots = generateTimeSlots(dayPlaces.length);
-    const items: ItineraryItem[] = dayPlaces.map((place, placeIndex) => ({
-      placeId: place.id,
-      placeName: place.name,
-      startTime: timeSlots[placeIndex]?.start || '09:00',
-      endTime: timeSlots[placeIndex]?.end || '11:00',
-      notes: `Visit ${place.name} - ${place.category}`,
-    }));
-
-    itinerary.push({
-      day: index + 1,
-      items,
-    });
-  });
-
-  return itinerary;
-};
+const PLANS_COLLECTION = 'plans';
+const SELECTED_PLANS_COLLECTION = 'selected_plans';
 
 export const tripService = {
-  createTrip: async (
-    tripData: Omit<Trip, 'id' | 'createdAt' | 'updatedAt' | 'itinerary' | 'status' | 'isPublic'> & { isPublic?: boolean },
-    availablePlaces: Place[]
-  ): Promise<Trip> => {
-    console.log('TripService: Creating trip...', tripData.destination);
+  createPlan: async (
+    planData: Omit<Plan, 'id' | 'createdAt'>
+  ): Promise<Plan> => {
     try {
-      const relevantPlaces = availablePlaces.filter(
-        (place) =>
-          place.address.toLowerCase().includes(tripData.destination.toLowerCase()) ||
-          place.category.toLowerCase().includes(tripData.destination.toLowerCase()) ||
-          tripData.interests.some((interest) =>
-            place.category.toLowerCase().includes(interest.toLowerCase())
-          )
-      );
-
-      const itinerary = generateItinerary(
-        relevantPlaces.slice(0, tripData.days * 3),
-        tripData.days
-      );
-
       const dataToSave = {
-        ...tripData,
-        itinerary,
-        status: (tripData.isPublic ? 'approved' : 'draft') as TripStatus,
-        isPublic: tripData.isPublic || false,
+        ...planData,
         createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
       };
 
-      const tripRef = await addDoc(collection(db, TRIPS_COLLECTION), dataToSave);
-      console.log('TripService: Trip created successfully ID:', tripRef.id);
+      const planRef = await addDoc(collection(db, PLANS_COLLECTION), dataToSave);
 
       return {
-        id: tripRef.id,
-        ...tripData,
-        itinerary,
-        status: (tripData.isPublic ? 'approved' : 'draft') as TripStatus,
-        isPublic: tripData.isPublic || false,
+        id: planRef.id,
+        ...planData,
         createdAt: new Date(),
-        updatedAt: new Date(),
       };
     } catch (error: any) {
       console.error('TripService Create Error:', error);
-      throw new Error(error.message || 'Failed to create trip');
+      throw new Error(error.message || 'Failed to create plan');
     }
   },
 
-  getTripById: async (tripId: string): Promise<Trip | null> => {
+  getPlanById: async (planId: string): Promise<Plan | null> => {
     try {
-      const tripDoc = await getDoc(doc(db, TRIPS_COLLECTION, tripId));
-      if (!tripDoc.exists()) return null;
+      const planDoc = await getDoc(doc(db, PLANS_COLLECTION, planId));
+      if (!planDoc.exists()) return null;
 
-      const data = tripDoc.data();
+      const data = planDoc.data();
       return {
-        id: tripDoc.id,
+        id: planDoc.id,
         ...data,
         createdAt: data.createdAt?.toDate() || new Date(),
-        updatedAt: data.updatedAt?.toDate() || new Date(),
-      } as Trip;
+      } as Plan;
     } catch (error: any) {
       console.error('TripService GetById Error:', error);
-      throw new Error(error.message || 'Failed to get trip');
+      throw new Error(error.message || 'Failed to get plan');
     }
   },
 
-  getTripsByUser: async (userId: string): Promise<Trip[]> => {
-    console.log('TripService: Getting trips for user:', userId);
+  getPlansByCreator: async (userId: string): Promise<Plan[]> => {
     try {
       const q = query(
-        collection(db, TRIPS_COLLECTION),
-        where('userId', '==', userId)
+        collection(db, PLANS_COLLECTION),
+        where('createdBy', '==', userId)
       );
       const snapshot = await getDocs(q);
 
@@ -180,44 +69,26 @@ export const tripService = {
           id: doc.id,
           ...data,
           createdAt: data.createdAt?.toDate() || new Date(),
-          updatedAt: data.updatedAt?.toDate() || new Date(),
-        } as Trip;
+        } as Plan;
       }).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
     } catch (error: any) {
-      console.error('TripService GetByUser Error:', error);
-      throw new Error(error.message || 'Failed to get user trips');
+      console.error('TripService GetByCreator Error:', error);
+      throw new Error(error.message || 'Failed to get user plans');
     }
   },
 
-  updateTrip: async (tripId: string, updates: Partial<Trip>): Promise<void> => {
-    console.log('TripService: Updating trip:', tripId);
+  deletePlan: async (planId: string): Promise<void> => {
     try {
-      const tripRef = doc(db, TRIPS_COLLECTION, tripId);
-      await updateDoc(tripRef, {
-        ...updates,
-        updatedAt: serverTimestamp(),
-      });
-    } catch (error: any) {
-      console.error('TripService Update Error:', error);
-      throw new Error(error.message || 'Failed to update trip');
-    }
-  },
-
-  deleteTrip: async (tripId: string): Promise<void> => {
-    console.log('TripService: Deleting trip:', tripId);
-    try {
-      await deleteDoc(doc(db, TRIPS_COLLECTION, tripId));
+      await deleteDoc(doc(db, PLANS_COLLECTION, planId));
     } catch (error: any) {
       console.error('TripService Delete Error:', error);
-      throw new Error(error.message || 'Failed to delete trip');
+      throw new Error(error.message || 'Failed to delete plan');
     }
   },
 
-  getAllTrips: async (): Promise<Trip[]> => {
+  getAllPlans: async (): Promise<Plan[]> => {
     try {
-      const q = query(
-        collection(db, TRIPS_COLLECTION)
-      );
+      const q = query(collection(db, PLANS_COLLECTION));
       const snapshot = await getDocs(q);
 
       return snapshot.docs.map((doc) => {
@@ -226,104 +97,83 @@ export const tripService = {
           id: doc.id,
           ...data,
           createdAt: data.createdAt?.toDate() || new Date(),
-          updatedAt: data.updatedAt?.toDate() || new Date(),
-        } as Trip;
+        } as Plan;
       }).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
     } catch (error: any) {
       console.error('TripService GetAll Error:', error);
-      throw new Error(error.message || 'Failed to get all trips');
+      throw new Error(error.message || 'Failed to get all plans');
     }
   },
 
-  getPublicTrips: async (): Promise<Trip[]> => {
-    console.log('TripService: Getting public trips');
+  // Traveller functions
+  selectPlan: async (userId: string, planId: string): Promise<SelectedPlan> => {
     try {
+      // Check if already selected
       const q = query(
-        collection(db, TRIPS_COLLECTION),
-        where('isPublic', '==', true)
+        collection(db, SELECTED_PLANS_COLLECTION),
+        where('userId', '==', userId),
+        where('planId', '==', planId)
       );
       const snapshot = await getDocs(q);
+      if (!snapshot.empty) {
+        throw new Error('Plan already selected');
+      }
 
-      return snapshot.docs.map((doc) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-          createdAt: data.createdAt?.toDate() || new Date(),
-          updatedAt: data.updatedAt?.toDate() || new Date(),
-        } as Trip;
-      }).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-    } catch (error: any) {
-      console.error('TripService GetPublic Error:', error);
-      throw new Error(error.message || 'Failed to get public trips');
-    }
-  },
-
-  cloneTrip: async (tripId: string, newUserId: string): Promise<Trip> => {
-    console.log('TripService: Cloning trip:', { tripId, newUserId });
-    try {
-      const originalTrip = await tripService.getTripById(tripId);
-      if (!originalTrip) throw new Error('Original trip not found');
-
-      const clonedData: Omit<Trip, 'id' | 'createdAt' | 'updatedAt'> = {
-        userId: newUserId,
-        destination: originalTrip.destination,
-        budget: originalTrip.budget,
-        days: originalTrip.days,
-        interests: originalTrip.interests,
-        itinerary: originalTrip.itinerary,
-        status: 'draft',
-        agentId: originalTrip.agentId,
-        isPublic: false, // Cloned trips are private by default
-      };
-
-      const tripRef = await addDoc(collection(db, TRIPS_COLLECTION), {
-        ...clonedData,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+      const docRef = await addDoc(collection(db, SELECTED_PLANS_COLLECTION), {
+        userId,
+        planId,
+        addedAt: serverTimestamp()
       });
 
       return {
-        id: tripRef.id,
-        ...clonedData,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        id: docRef.id,
+        userId,
+        planId,
+        addedAt: new Date()
       };
     } catch (error: any) {
-      console.error('TripService Clone Error:', error);
-      throw new Error(error.message || 'Failed to choose this plan');
+      console.error('TripService Select Error:', error);
+      throw new Error(error.message || 'Failed to select plan');
     }
   },
 
-  updateTripStatus: async (tripId: string, status: TripStatus, agentId?: string): Promise<void> => {
-    console.log('TripService: Updating trip status:', { tripId, status, agentId });
+  unselectPlan: async (userId: string, planId: string): Promise<void> => {
     try {
-      const tripRef = doc(db, TRIPS_COLLECTION, tripId);
-      const updates: any = {
-        status,
-        updatedAt: serverTimestamp(),
-      };
-      if (agentId) {
-        updates.agentId = agentId;
+      const q = query(
+        collection(db, SELECTED_PLANS_COLLECTION),
+        where('userId', '==', userId),
+        where('planId', '==', planId)
+      );
+      const snapshot = await getDocs(q);
+      if (!snapshot.empty) {
+        await deleteDoc(snapshot.docs[0].ref);
       }
-      await updateDoc(tripRef, updates);
     } catch (error: any) {
-      console.error('TripService updateTripStatus Error:', error);
-      throw new Error(error.message || 'Failed to update trip status');
+      console.error('TripService Unselect Error:', error);
+      throw new Error(error.message || 'Failed to remove selected plan');
     }
   },
 
-  updateItinerary: async (tripId: string, itinerary: DayPlan[]): Promise<void> => {
-    console.log('TripService: Updating itinerary:', tripId);
+  getSelectedPlansForUser: async (userId: string): Promise<Plan[]> => {
     try {
-      const tripRef = doc(db, TRIPS_COLLECTION, tripId);
-      await updateDoc(tripRef, {
-        itinerary,
-        updatedAt: serverTimestamp(),
-      });
+      const q = query(
+        collection(db, SELECTED_PLANS_COLLECTION),
+        where('userId', '==', userId)
+      );
+      const snapshot = await getDocs(q);
+      
+      const plans = [];
+      for (const docSnap of snapshot.docs) {
+        const data = docSnap.data();
+        const plan = await tripService.getPlanById(data.planId);
+        if (plan) {
+          plans.push(plan);
+        }
+      }
+      return plans;
     } catch (error: any) {
-      console.error('TripService updateItinerary Error:', error);
-      throw new Error(error.message || 'Failed to update itinerary');
+      console.error('TripService GetSelected Error:', error);
+      throw new Error(error.message || 'Failed to fetch selected plans');
     }
-  },
+  }
 };

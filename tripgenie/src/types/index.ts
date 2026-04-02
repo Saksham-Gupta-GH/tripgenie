@@ -10,57 +10,23 @@ export interface User {
   profileImage?: string;
 }
 
-// Location Types
-export interface Location {
-  lat: number;
-  lng: number;
-}
-
-// Place Types
-export interface Place {
+// Plan Types
+export interface Plan {
   id: string;
-  name: string;
-  location: Location;
-  address: string;
-  category: string;
-  description: string;
-  images: string[];
-  estimatedCost: number;
-  duration: number; // in hours
+  title: string;
+  destination: string;
+  numberOfDays: number;
+  budget: number;
+  itinerary: string[];
   createdBy: string;
-  isGlobal: boolean;
+  createdAt: Date;
 }
 
-// Itinerary Types
-export interface ItineraryItem {
-  placeId: string;
-  placeName: string;
-  startTime: string;
-  endTime: string;
-  notes?: string;
-}
-
-export interface DayPlan {
-  day: number;
-  items: ItineraryItem[];
-}
-
-// Trip Types
-export type TripStatus = 'draft' | 'pending' | 'approved' | 'rejected';
-
-export interface Trip {
+export interface SelectedPlan {
   id: string;
   userId: string;
-  destination: string;
-  budget: number;
-  days: number;
-  interests: string[];
-  itinerary: DayPlan[];
-  status: TripStatus;
-  agentId?: string;
-  isPublic?: boolean; // If true, all travellers can see and choose this plan
-  createdAt: Date;
-  updatedAt: Date;
+  planId: string;
+  addedAt: Date;
 }
 
 // Chat Types
