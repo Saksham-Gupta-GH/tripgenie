@@ -88,18 +88,20 @@ export const placesService = {
   getAllPlaces: async (): Promise<Place[]> => {
     try {
       const q = query(
-        collection(db, PLACES_COLLECTION),
-        orderBy('name', 'asc')
+        collection(db, PLACES_COLLECTION)
       );
       const snapshot = await getDocs(q);
 
-      return snapshot.docs.map(
+      const places = snapshot.docs.map(
         (doc) =>
           ({
             id: doc.id,
             ...doc.data(),
           } as Place)
       );
+
+      // Sort client-side to avoid index requirement
+      return places.sort((a, b) => a.name.localeCompare(b.name));
     } catch (error) {
       console.error('Error getting all places:', error);
       throw new Error('Failed to get places');
@@ -110,18 +112,20 @@ export const placesService = {
     try {
       const q = query(
         collection(db, PLACES_COLLECTION),
-        where('isGlobal', '==', true),
-        orderBy('name', 'asc')
+        where('isGlobal', '==', true)
       );
       const snapshot = await getDocs(q);
 
-      return snapshot.docs.map(
+      const places = snapshot.docs.map(
         (doc) =>
           ({
             id: doc.id,
             ...doc.data(),
           } as Place)
       );
+
+      // Sort client-side
+      return places.sort((a, b) => a.name.localeCompare(b.name));
     } catch (error) {
       console.error('Error getting global places:', error);
       throw new Error('Failed to get places');
@@ -132,18 +136,20 @@ export const placesService = {
     try {
       const q = query(
         collection(db, PLACES_COLLECTION),
-        where('category', '==', category),
-        orderBy('name', 'asc')
+        where('category', '==', category)
       );
       const snapshot = await getDocs(q);
 
-      return snapshot.docs.map(
+      const places = snapshot.docs.map(
         (doc) =>
           ({
             id: doc.id,
             ...doc.data(),
           } as Place)
       );
+
+      // Sort client-side
+      return places.sort((a, b) => a.name.localeCompare(b.name));
     } catch (error) {
       console.error('Error getting places by category:', error);
       throw new Error('Failed to get places');
@@ -152,21 +158,24 @@ export const placesService = {
 
   getPlacesByDestination: async (destination: string): Promise<Place[]> => {
     try {
-      const q = query(
-        collection(db, PLACES_COLLECTION),
-        where('category', '>=', destination),
-        where('category', '<=', destination + '\uf8ff'),
-        orderBy('category', 'asc')
-      );
+      // Use client-side filtering for destinations to avoid complex queries/indexes
+      const q = query(collection(db, PLACES_COLLECTION));
       const snapshot = await getDocs(q);
 
-      return snapshot.docs.map(
+      const places = snapshot.docs.map(
         (doc) =>
           ({
             id: doc.id,
             ...doc.data(),
           } as Place)
       );
+
+      const filtered = places.filter(place => 
+        place.address.toLowerCase().includes(destination.toLowerCase()) ||
+        place.name.toLowerCase().includes(destination.toLowerCase())
+      );
+
+      return filtered.sort((a, b) => a.name.localeCompare(b.name));
     } catch (error) {
       console.error('Error getting places by destination:', error);
       throw new Error('Failed to get places');
@@ -175,33 +184,26 @@ export const placesService = {
 
   getPlacesByCreator: async (userId: string): Promise<Place[]> => {
     try {
+      console.log('Fetching places for creator:', userId);
       const q = query(
         collection(db, PLACES_COLLECTION),
-        where('createdBy', '==', userId),
-        orderBy('name', 'asc')
+        where('createdBy', '==', userId)
       );
       const snapshot = await getDocs(q);
 
-      return snapshot.docs.map(
+      const places = snapshot.docs.map(
         (doc) =>
           ({
             id: doc.id,
             ...doc.data(),
           } as Place)
       );
+
+      console.log(`Found ${places.length} places for creator`);
+      return places.sort((a, b) => a.name.localeCompare(b.name));
     } catch (error) {
-      console.error('Error getting places by creator:', error);
-      if (error instanceof Error && error.message.includes('FAILED_PRECONDITION')) {
-        // This is usually a missing index error
-        console.warn('Firestore index missing for getPlacesByCreator. Falling back to un-ordered fetch.');
-        const q = query(
-          collection(db, PLACES_COLLECTION),
-          where('createdBy', '==', userId)
-        );
-        const snapshot = await getDocs(q);
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Place));
-      }
-      throw new Error('Failed to get places');
+      console.error('CRITICAL: Error getting places by creator:', error);
+      throw new Error('Failed to get user places. Please try refreshing.');
     }
   },
 

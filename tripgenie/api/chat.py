@@ -1,57 +1,38 @@
-import json
 import os
+import json
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 import google.generativeai as genai
-from http.server import BaseHTTPRequestHandler
 
-class handler(BaseHTTPRequestHandler):
-    def do_POST(self):
-        # Enable CORS
-        self.send_response(200)
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
-        
-        # Handle preflight request
-        if self.command == 'OPTIONS':
-            self.end_headers()
-            return
+app = Flask(__name__)
+CORS(app)
 
-        content_length = int(self.headers['Content-Length'])
-        post_data = self.rfile.read(content_length)
-        data = json.loads(post_data)
-        message = data.get('message', '')
+# Gemini configuration
+api_key = os.environ.get("GEMINI_API_KEY")
+if api_key:
+    genai.configure(api_key=api_key)
+model_name = os.environ.get("GEMINI_MODEL", "gemini-1.5-flash-latest")
+model = genai.GenerativeModel(model_name)
 
-        if not message:
-            self.send_response(400)
-            self.send_header('Content-type', 'application/json')
-            self.end_headers()
-            self.wfile.write(json.dumps({'reply': 'Empty message'}).encode())
-            return
+@app.route("/api/chat", methods=["POST"])
+def chat():
+    data = request.get_json()
+    message = data.get("message", "")
 
-        try:
-            api_key = os.environ.get("GEMINI_API_KEY")
-            if not api_key:
-                raise Exception("Missing GEMINI_API_KEY environment variable")
-                
-            genai.configure(api_key=api_key)
-            model_name = os.environ.get("GEMINI_MODEL", "gemini-1.5-flash-latest")
-            model = genai.GenerativeModel(model_name)
+    if not message:
+        return jsonify({"reply": "Empty message"}), 400
+
+    try:
+        if not os.environ.get("GEMINI_API_KEY"):
+            return jsonify({"reply": "GEMINI_API_KEY is not set on the server."}), 500
             
-            response = model.generate_content(message)
-            
-            self.send_response(200)
-            self.send_header('Content-type', 'application/json')
-            self.end_headers()
-            self.wfile.write(json.dumps({'reply': response.text}).encode())
-        except Exception as e:
-            self.send_response(500)
-            self.send_header('Content-type', 'application/json')
-            self.end_headers()
-            self.wfile.write(json.dumps({'reply': str(e)}).encode())
-    
-    def do_OPTIONS(self):
-        self.send_response(200)
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
-        self.end_headers()
+        response = model.generate_content(message)
+        return jsonify({"reply": response.text})
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return jsonify({"reply": f"Gemini Error: {str(e)}"}), 500
+
+# For Vercel, the file should expose the Flask app as 'app'
+# This allows Vercel to use it as a serverless function
+if __name__ == "__main__":
+    app.run(debug=True)
