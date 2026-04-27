@@ -29,7 +29,7 @@ const MapEvents = ({
       setPosition(e.latlng);
       if (onAddressFound) {
         try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${e.latlng.lat}&lon=${e.latlng.lng}`);
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${e.latlng.lat}&lon=${e.latlng.lng}&accept-language=en`);
           const data = await res.json();
           if (data && data.display_name) {
             onAddressFound(data.display_name);
@@ -52,8 +52,8 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({ position, setPos
         style={{ height: '100%', width: '100%' }}
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
         />
         {position && <Marker position={position} />}
         <MapEvents setPosition={setPosition} onAddressFound={onAddressFound} />

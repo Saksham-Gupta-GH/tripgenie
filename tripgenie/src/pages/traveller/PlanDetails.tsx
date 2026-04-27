@@ -120,7 +120,10 @@ export const PlanDetails: React.FC = () => {
                 <h3 className="text-xl font-bold mb-4 flex items-center"><MapPin className="w-5 h-5 mr-2 text-red-600" /> Exact Location</h3>
                 <div className="h-64 w-full rounded-lg overflow-hidden border border-gray-300 relative z-0">
                   <MapContainer center={[plan.location.lat, plan.location.lng]} zoom={13} style={{ height: '100%', width: '100%' }}>
-                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                    <TileLayer 
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                      url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" 
+                    />
                     <Marker position={[plan.location.lat, plan.location.lng]} />
                   </MapContainer>
                 </div>
