@@ -27,7 +27,7 @@ export const Header: React.FC<HeaderProps> = ({
 
         <button
           onClick={onAiSidebarToggle}
-          className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all shadow-sm"
+          className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-red-600 text-white rounded-lg hover:from-purple-700 hover:to-red-700 transition-all shadow-sm"
         >
           <Sparkles className="w-4 h-4" />
           <span className="hidden sm:inline">AI Assistant</span>

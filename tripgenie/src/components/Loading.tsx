@@ -12,7 +12,7 @@ export const Loading: React.FC<LoadingProps> = ({
 }) => {
   const content = (
     <div className="flex flex-col items-center justify-center space-y-3">
-      <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+      <Loader2 className="w-8 h-8 text-red-600 animate-spin" />
       <p className="text-gray-600 text-sm">{message}</p>
     </div>
   );

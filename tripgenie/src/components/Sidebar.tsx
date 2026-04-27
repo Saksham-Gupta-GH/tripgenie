@@ -67,8 +67,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       roles: ['agent'],
     },
     {
-      path: '/agent/trip-requests',
-      label: 'Trip Requests',
+      path: '/agent/bookings',
+      label: 'Manage Bookings',
       icon: <List className="w-5 h-5" />,
       roles: ['agent'],
     },
@@ -129,7 +129,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-gray-200">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center">
                 <MapPin className="w-5 h-5 text-white" />
               </div>
               <span className="text-xl font-bold text-gray-900">TripGenie</span>
@@ -145,7 +145,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           {/* User info */}
           <div className="p-4 border-b border-gray-200">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
+              <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
                 {user?.name.charAt(0).toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
@@ -167,7 +167,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 className={({ isActive }) =>
                   `flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all ${
                     isActive
-                      ? 'bg-blue-50 text-blue-700 font-medium'
+                      ? 'bg-red-50 text-red-700 font-medium'
                       : 'text-gray-700 hover:bg-gray-100'
                   }`
                 }

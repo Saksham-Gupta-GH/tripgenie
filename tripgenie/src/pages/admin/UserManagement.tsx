@@ -32,7 +32,7 @@ const ROLE_ICONS = {
 };
 
 const ROLE_COLORS = {
-  traveller: 'bg-blue-100 text-blue-800',
+  traveller: 'bg-red-100 text-red-800',
   agent: 'bg-orange-100 text-orange-800',
   admin: 'bg-red-100 text-red-800',
 };
@@ -118,7 +118,7 @@ export const UserManagement: React.FC = () => {
               placeholder="Search users..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none"
             />
           </div>
           <div className="flex items-center space-x-2">
@@ -128,7 +128,7 @@ export const UserManagement: React.FC = () => {
               onChange={(e) =>
                 setRoleFilter(e.target.value as UserRole | 'all')
               }
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 outline-none"
             >
               <option value="all">All Roles</option>
               {ROLES.map((role) => (
@@ -168,7 +168,7 @@ export const UserManagement: React.FC = () => {
                       <tr key={user.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4">
                           <div className="flex items-center">
-                            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
+                            <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
                               {user.name.charAt(0).toUpperCase()}
                             </div>
                             <div className="ml-4">
@@ -198,7 +198,7 @@ export const UserManagement: React.FC = () => {
                               setSelectedUser(user);
                               setShowEditModal(true);
                             }}
-                            className="text-blue-600 hover:text-blue-900 p-2 hover:bg-blue-50 rounded-lg transition-colors"
+                            className="text-red-600 hover:text-red-900 p-2 hover:bg-red-50 rounded-lg transition-colors"
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
@@ -232,7 +232,7 @@ export const UserManagement: React.FC = () => {
         {selectedUser && (
           <div className="space-y-4">
             <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-lg">
+              <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-lg">
                 {selectedUser.name.charAt(0).toUpperCase()}
               </div>
               <div>
@@ -257,28 +257,28 @@ export const UserManagement: React.FC = () => {
                     disabled={isUpdating || selectedUser.role === role}
                     className={`w-full flex items-center p-3 rounded-lg border transition-all ${
                       selectedUser.role === role
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
+                        ? 'border-red-500 bg-red-50'
+                        : 'border-gray-200 hover:border-red-300 hover:bg-gray-50'
                     }`}
                   >
                     <RoleIcon
                       className={`w-5 h-5 mr-3 ${
                         selectedUser.role === role
-                          ? 'text-blue-600'
+                          ? 'text-red-600'
                           : 'text-gray-400'
                       }`}
                     />
                     <span
                       className={`font-medium capitalize ${
                         selectedUser.role === role
-                          ? 'text-blue-900'
+                          ? 'text-red-900'
                           : 'text-gray-700'
                       }`}
                     >
                       {role}
                     </span>
                     {selectedUser.role === role && (
-                      <span className="ml-auto text-xs text-blue-600 font-medium">
+                      <span className="ml-auto text-xs text-red-600 font-medium">
                         Current
                       </span>
                     )}

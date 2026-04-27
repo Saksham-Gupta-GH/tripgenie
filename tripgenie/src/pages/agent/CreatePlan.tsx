@@ -11,8 +11,10 @@ import {
   Calendar,
   ArrowRight,
   Type,
-  List
+  List,
+  Map as MapIcon
 } from 'lucide-react';
+import { LocationPicker } from '../../components/LocationPicker';
 
 export const CreatePlan: React.FC = () => {
   const { user, firebaseUser } = useAuth();
@@ -24,7 +26,8 @@ export const CreatePlan: React.FC = () => {
     budget: 1000,
     numberOfDays: 3,
     itinerary: ['', '', ''],
-    imageUrlsText: ''
+    imageUrlsText: '',
+    location: null as { lat: number; lng: number } | null
   });
 
   const handleDayChange = (index: number) => (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -67,6 +70,7 @@ export const CreatePlan: React.FC = () => {
         numberOfDays: formData.numberOfDays,
         itinerary: formData.itinerary,
         imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
+        location: formData.location || undefined,
         createdBy: firebaseUser.uid,
       });
       
@@ -109,7 +113,7 @@ export const CreatePlan: React.FC = () => {
                     }
                     maxLength={60}
                     required
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none"
                     placeholder="e.g., Amazing 3 Days in Paris"
                   />
                 </div>
@@ -129,10 +133,23 @@ export const CreatePlan: React.FC = () => {
                       setFormData((prev) => ({ ...prev, destination: e.target.value }))
                     }
                     required
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none"
                     placeholder="Where is this plan for? (e.g., Goa, Rajasthan)"
                   />
                 </div>
+              </div>
+
+              {/* Exact Location Picker */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                  <MapIcon className="w-4 h-4 mr-1 text-gray-500" />
+                  Exact Pin Location (Optional)
+                </label>
+                <p className="text-xs text-gray-500 mb-2">Click on the map to place a pin for the primary pickup or destination location.</p>
+                <LocationPicker 
+                  position={formData.location}
+                  setPosition={(pos) => setFormData(prev => ({ ...prev, location: pos }))}
+                />
               </div>
 
               {/* Destination Images */}
@@ -146,7 +163,7 @@ export const CreatePlan: React.FC = () => {
                     setFormData((prev) => ({ ...prev, imageUrlsText: e.target.value }))
                   }
                   rows={3}
-                  className="w-full p-3 bg-white border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
+                  className="w-full p-3 bg-white border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none resize-none"
                   placeholder="Paste one image URL per line"
                 />
                 <p className="text-xs text-gray-500 mt-2">
@@ -170,7 +187,7 @@ export const CreatePlan: React.FC = () => {
                         setFormData((prev) => ({ ...prev, budget: parseInt(e.target.value) || 0 }))
                       }
                       required
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none"
                     />
                   </div>
                 </div>
@@ -184,11 +201,11 @@ export const CreatePlan: React.FC = () => {
                     <input
                       type="number"
                       min="1"
-                      max="14"
+                      max="10"
                       value={formData.numberOfDays}
                       onChange={handleDaysChange}
                       required
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none"
                     />
                   </div>
                 </div>
@@ -197,7 +214,7 @@ export const CreatePlan: React.FC = () => {
               {/* Itinerary */}
               <div className="pt-4 border-t border-gray-100 mt-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                  <List className="w-5 h-5 mr-2 text-blue-600" />
+                  <List className="w-5 h-5 mr-2 text-red-600" />
                   Day-by-Day Itinerary
                 </h3>
                 <div className="space-y-4">
@@ -211,7 +228,7 @@ export const CreatePlan: React.FC = () => {
                         onChange={handleDayChange(index)}
                         rows={3}
                         required
-                        className="w-full p-3 bg-white border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
+                        className="w-full p-3 bg-white border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none resize-none"
                         placeholder={`Describe the activities for Day ${index + 1}...`}
                       />
                     </div>

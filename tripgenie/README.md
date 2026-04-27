@@ -1,73 +1,77 @@
-# React + TypeScript + Vite
+# TripGenie
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+TripGenie is a role‑based travel planning platform that connects travellers with expert agents. Agents curate detailed trip plans, travellers discover and select plans with a travel date, and admins oversee the system.
 
-Currently, two official plugins are available:
+Live: [https://tripgenie-ashy.vercel.app](https://tripgenie-ashy.vercel.app)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Features
+- Role‑based access: Traveller, Agent, Admin
+- Agent plan creation with itinerary and destination images
+- Traveller discovery, search, and plan selection with travel date
+- Plan details with itinerary and image gallery
+- Admin user management and system overview
 
-## React Compiler
+## Tech Stack
+- React + TypeScript + Vite
+- Firebase (Auth, Firestore, Storage)
+- Tailwind CSS
+- Vercel for deployment
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Getting Started
+### 1) Install
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### 2) Configure Environment
+Create a `.env` based on `.env.example`:
 ```
+VITE_FIREBASE_API_KEY=
+VITE_FIREBASE_AUTH_DOMAIN=
+VITE_FIREBASE_PROJECT_ID=
+VITE_FIREBASE_STORAGE_BUCKET=
+VITE_FIREBASE_MESSAGING_SENDER_ID=
+VITE_FIREBASE_APP_ID=
+GEMINI_API_KEY=
+GEMINI_MODEL=gemini-1.5-flash-latest
+```
+
+### 3) Run Locally
+```bash
+npm run dev
+```
+
+### 4) Build
+```bash
+npm run build
+```
+
+## Firebase Setup
+Deploy Firestore rules (and storage rules after enabling Storage in Firebase Console):
+```bash
+firebase deploy --only firestore:rules --project <your-project-id>
+```
+
+If you want to deploy Storage rules too:
+```bash
+firebase deploy --only storage --project <your-project-id>
+```
+
+## Admin Account
+The admin role is restricted to a single email:
+- `saksham77779@gmail.com`
+
+You can update this in:
+- `src/config/admin.ts`
+
+## Deployment
+Vercel is connected to GitHub. Push to `main` to redeploy:
+```bash
+git add . && git commit -m "chore: update" && git push origin main
+```
+
+## Scripts
+- `npm run dev` – start development server
+- `npm run build` – production build
+- `npm run preview` – preview production build
+- `npm run lint` – lint the codebase

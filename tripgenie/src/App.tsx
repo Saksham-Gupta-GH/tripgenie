@@ -20,6 +20,7 @@ import { PlanDetails as TravellerPlanDetails } from './pages/traveller/PlanDetai
 // Agent Pages
 import { AgentDashboard } from './pages/agent/Dashboard';
 import { CreatePlan } from './pages/agent/CreatePlan';
+import { AgentBookings } from './pages/agent/AgentBookings';
 
 // Admin Pages
 import { AdminDashboard } from './pages/admin/Dashboard';
@@ -79,6 +80,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['agent']}>
                 <CreatePlan />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/agent/bookings"
+            element={
+              <ProtectedRoute allowedRoles={['agent']}>
+                <AgentBookings />
               </ProtectedRoute>
             }
           />

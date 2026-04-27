@@ -109,7 +109,7 @@ export const GeminiSidebar: React.FC<GeminiSidebarProps> = ({
       >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-gradient-to-r from-purple-600 to-blue-600">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-gradient-to-r from-purple-600 to-red-600">
             <div className="flex items-center space-x-2">
               <Sparkles className="w-5 h-5 text-white" />
               <span className="text-lg font-semibold text-white">
@@ -136,7 +136,7 @@ export const GeminiSidebar: React.FC<GeminiSidebarProps> = ({
                 <div
                   className={`max-w-[85%] rounded-2xl px-4 py-3 ${
                     message.role === 'user'
-                      ? 'bg-blue-600 text-white rounded-br-none'
+                      ? 'bg-red-600 text-white rounded-br-none'
                       : 'bg-gray-100 text-gray-800 rounded-bl-none'
                   }`}
                 >
@@ -149,7 +149,7 @@ export const GeminiSidebar: React.FC<GeminiSidebarProps> = ({
                     <span
                       className={`text-xs font-medium ${
                         message.role === 'user'
-                          ? 'text-blue-100'
+                          ? 'text-red-100'
                           : 'text-gray-500'
                       }`}
                     >

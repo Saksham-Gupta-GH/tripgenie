@@ -94,8 +94,8 @@ export const AgentDashboard: React.FC = () => {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
-                <div className="p-3 bg-blue-100 rounded-lg">
-                  <Briefcase className="w-6 h-6 text-blue-600" />
+                <div className="p-3 bg-red-100 rounded-lg">
+                  <Briefcase className="w-6 h-6 text-red-600" />
                 </div>
                 <div className="ml-4">
                   <p className="text-sm text-gray-600">Your Plans</p>

@@ -19,8 +19,10 @@ export interface Plan {
   budget: number;
   itinerary: string[];
   imageUrls?: string[];
+  location?: { lat: number; lng: number };
   createdBy: string;
   createdAt: Date;
+  ratings?: { userId: string; rating: number; review?: string }[];
 }
 
 export interface SelectedPlan {
@@ -29,6 +31,8 @@ export interface SelectedPlan {
   planId: string;
   travelDate: Date;
   addedAt: Date;
+  status?: 'pending' | 'confirmed' | 'denied';
+  agentMessage?: string;
 }
 
 // Chat Types

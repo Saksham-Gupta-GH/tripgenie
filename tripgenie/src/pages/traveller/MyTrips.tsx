@@ -19,7 +19,7 @@ import {
 export const MyTrips: React.FC = () => {
   const { firebaseUser } = useAuth();
   const navigate = useNavigate();
-  const [plans, setPlans] = useState<Plan[]>([]);
+  const [plans, setPlans] = useState<{plan: Plan, booking: any}[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const loadPlans = useCallback(async () => {
@@ -44,7 +44,7 @@ export const MyTrips: React.FC = () => {
 
     try {
       await tripService.unselectPlan(firebaseUser.uid, planId);
-      setPlans((prev) => prev.filter((p) => p.id !== planId));
+      setPlans((prev) => prev.filter((p) => p.plan.id !== planId));
     } catch (error) {
       console.error('Error removing plan:', error);
       alert('Failed to remove plan');
@@ -99,7 +99,7 @@ export const MyTrips: React.FC = () => {
           </Card>
         ) : (
           <div className="grid gap-4">
-            {plans.map((plan) => (
+            {plans.map(({ plan, booking }) => (
               <Card key={plan.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-5">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -108,6 +108,9 @@ export const MyTrips: React.FC = () => {
                         <h3 className="text-lg font-bold text-gray-900">
                           {plan.title}
                         </h3>
+                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${booking.status === 'confirmed' ? 'bg-green-100 text-green-800' : booking.status === 'denied' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                          {booking.status?.toUpperCase() || 'PENDING'}
+                        </span>
                       </div>
                       <p className="text-gray-700 font-medium mb-3">
                         {plan.destination}
@@ -125,6 +128,13 @@ export const MyTrips: React.FC = () => {
                           {plan.itinerary.length} days planned
                         </span>
                       </div>
+                      
+                      {booking.agentMessage && (
+                        <div className="mt-4 p-3 bg-red-50 border border-red-100 rounded-lg">
+                          <p className="text-sm text-gray-800 font-medium mb-1">Message from Agent:</p>
+                          <p className="text-sm text-gray-600">{booking.agentMessage}</p>
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex items-center space-x-2">
