@@ -216,18 +216,24 @@ export const tripService = {
   getAllBookingsForAgent: async (agentId: string): Promise<{plan: Plan, booking: SelectedPlan}[]> => {
     try {
       console.log('TripService: Fetching bookings for agent...', agentId);
-      const q = query(
-        collection(db, SELECTED_PLANS_COLLECTION),
-        where('agentId', '==', agentId)
-      );
+      // We fetch all selected plans and filter in-memory.
+      // This is safe since our new rules allow agents to read the collection,
+      // and it ensures we capture old bookings that don't have agentId yet.
+      const q = query(collection(db, SELECTED_PLANS_COLLECTION));
       const snapshot = await getDocs(q);
-      console.log('TripService: Found bookings count:', snapshot.size);
+      console.log('TripService: Found total bookings in DB:', snapshot.size);
       
       const results = [];
       for (const docSnap of snapshot.docs) {
         const data = docSnap.data();
+        
+        // If it has agentId, check it immediately
+        if (data.agentId && data.agentId !== agentId) {
+          continue;
+        }
+
         const plan = await tripService.getPlanById(data.planId);
-        if (plan) {
+        if (plan && plan.createdBy === agentId) {
           results.push({
             plan,
             booking: {

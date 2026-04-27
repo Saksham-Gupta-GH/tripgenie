@@ -48,12 +48,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       roles: ['traveller'],
     },
     {
-      path: '/traveller/create-trip',
-      label: 'Create Trip',
-      icon: <PlusCircle className="w-5 h-5" />,
-      roles: ['traveller'],
-    },
-    {
       path: '/traveller/my-trips',
       label: 'My Trips',
       icon: <Map className="w-5 h-5" />,
@@ -62,20 +56,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     // Agent routes
     {
       path: '/agent/dashboard',
-      label: 'Dashboard',
+      label: 'Manage Places',
       icon: <LayoutDashboard className="w-5 h-5" />,
+      roles: ['agent'],
+    },
+    {
+      path: '/agent/create-plan',
+      label: 'Create Plan',
+      icon: <PlusCircle className="w-5 h-5" />,
       roles: ['agent'],
     },
     {
       path: '/agent/bookings',
       label: 'Manage Bookings',
       icon: <List className="w-5 h-5" />,
-      roles: ['agent'],
-    },
-    {
-      path: '/agent/places',
-      label: 'Manage Places',
-      icon: <MapPin className="w-5 h-5" />,
       roles: ['agent'],
     },
     // Admin routes
