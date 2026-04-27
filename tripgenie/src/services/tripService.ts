@@ -9,6 +9,7 @@ import {
   where,
   serverTimestamp,
   Timestamp,
+  updateDoc,
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import type { Plan, SelectedPlan } from '../types';
@@ -21,11 +22,20 @@ export const tripService = {
     planData: Omit<Plan, 'id' | 'createdAt'>
   ): Promise<Plan> => {
     try {
+      // Clean undefined fields just in case
+      const cleanData: any = {};
+      Object.entries(planData).forEach(([key, value]) => {
+        if (value !== undefined) {
+          cleanData[key] = value;
+        }
+      });
+
       const dataToSave = {
-        ...planData,
+        ...cleanData,
         createdAt: serverTimestamp(),
       };
 
+      console.log('TripService: Saving Plan Data:', dataToSave);
       const planRef = await addDoc(collection(db, PLANS_COLLECTION), dataToSave);
 
       return {
@@ -34,7 +44,7 @@ export const tripService = {
         createdAt: new Date(),
       };
     } catch (error: any) {
-      console.error('TripService Create Error:', error);
+      console.error('TripService Create Error Details:', error);
       throw new Error(error.message || 'Failed to create plan');
     }
   },
@@ -239,8 +249,6 @@ export const tripService = {
 
   updateBookingStatus: async (bookingId: string, status: 'confirmed' | 'denied', message: string): Promise<void> => {
     try {
-      // In firebase 12/9 we would use updateDoc
-      const { updateDoc } = await import('firebase/firestore');
       await updateDoc(doc(db, SELECTED_PLANS_COLLECTION, bookingId), {
         status,
         agentMessage: message
@@ -262,7 +270,6 @@ export const tripService = {
       } else {
         ratings.push({ userId, rating, review });
       }
-      const { updateDoc } = await import('firebase/firestore');
       await updateDoc(doc(db, PLANS_COLLECTION, planId), {
         ratings
       });
