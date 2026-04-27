@@ -20,7 +20,7 @@ import {
 export const TravellerDashboard: React.FC = () => {
   const { user, firebaseUser } = useAuth();
   const navigate = useNavigate();
-  const [myPlans, setMyPlans] = useState<Plan[]>([]);
+  const [myPlans, setMyPlans] = useState<{ plan: Plan; booking: any }[]>([]);
   const [allPlans, setAllPlans] = useState<Plan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSelecting, setIsSelecting] = useState<string | null>(null);
@@ -133,7 +133,7 @@ export const TravellerDashboard: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                {recentPlans.map((plan) => (
+                {recentPlans.map(({ plan }) => (
                   <div
                     key={plan.id}
                     onClick={() => navigate(`/traveller/plan-details/${plan.id}`)}

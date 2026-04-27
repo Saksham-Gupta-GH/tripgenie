@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Layout } from '../../components/Layout';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/Card';
+import { Card, CardContent } from '../../components/Card';
 import { Button } from '../../components/Button';
 import { Loading } from '../../components/Loading';
 import { tripService } from '../../services/tripService';
