@@ -35,7 +35,6 @@ export const tripService = {
         createdAt: serverTimestamp(),
       };
 
-      console.log('TripService: Saving Plan Data:', dataToSave);
       const planRef = await addDoc(collection(db, PLANS_COLLECTION), dataToSave);
 
       return {

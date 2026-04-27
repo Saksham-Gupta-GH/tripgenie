@@ -26,7 +26,7 @@ const MapEvents = ({
 }) => {
   useMapEvents({
     async click(e) {
-      setPosition(e.latlng);
+      setPosition({ lat: e.latlng.lat, lng: e.latlng.lng });
       if (onAddressFound) {
         try {
           const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${e.latlng.lat}&lon=${e.latlng.lng}&accept-language=en`);
