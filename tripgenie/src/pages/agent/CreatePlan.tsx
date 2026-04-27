@@ -160,6 +160,7 @@ export const CreatePlan: React.FC = () => {
                 <LocationPicker 
                   position={formData.location}
                   setPosition={(pos) => setFormData(prev => ({ ...prev, location: pos }))}
+                  onAddressFound={(address) => setFormData(prev => ({ ...prev, exactAddress: address }))}
                 />
               </div>
 

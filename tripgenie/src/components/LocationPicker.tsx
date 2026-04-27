@@ -14,18 +14,36 @@ L.Icon.Default.mergeOptions({
 interface LocationPickerProps {
   position: { lat: number; lng: number } | null;
   setPosition: (pos: { lat: number; lng: number }) => void;
+  onAddressFound?: (address: string) => void;
 }
 
-const MapEvents = ({ setPosition }: { setPosition: (pos: { lat: number; lng: number }) => void }) => {
+const MapEvents = ({ 
+  setPosition, 
+  onAddressFound 
+}: { 
+  setPosition: (pos: { lat: number; lng: number }) => void;
+  onAddressFound?: (address: string) => void;
+}) => {
   useMapEvents({
-    click(e) {
+    async click(e) {
       setPosition(e.latlng);
+      if (onAddressFound) {
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${e.latlng.lat}&lon=${e.latlng.lng}`);
+          const data = await res.json();
+          if (data && data.display_name) {
+            onAddressFound(data.display_name);
+          }
+        } catch (error) {
+          console.error("Reverse geocoding failed", error);
+        }
+      }
     },
   });
   return null;
 };
 
-export const LocationPicker: React.FC<LocationPickerProps> = ({ position, setPosition }) => {
+export const LocationPicker: React.FC<LocationPickerProps> = ({ position, setPosition, onAddressFound }) => {
   return (
     <div className="h-64 w-full rounded-lg overflow-hidden border border-gray-300 relative z-0">
       <MapContainer
@@ -38,7 +56,7 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({ position, setPos
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         {position && <Marker position={position} />}
-        <MapEvents setPosition={setPosition} />
+        <MapEvents setPosition={setPosition} onAddressFound={onAddressFound} />
       </MapContainer>
     </div>
   );
