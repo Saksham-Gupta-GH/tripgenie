@@ -1,18 +1,19 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 /* Custom CSS Variables */
 :root {
-  --primary-color: #2563eb;
-  --primary-hover: #1d4ed8;
-  --secondary-color: #64748b;
-  --success-color: #16a34a;
-  --warning-color: #ca8a04;
-  --danger-color: #dc2626;
-  --background-color: #f8fafc;
-  --card-background: #ffffff;
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --border-color: #e2e8f0;
+  --primary-color: #EF4444; /* Bright Red */
+  --primary-hover: #DC2626;
+  --secondary-color: #717171; /* Airbnb Grey */
+  --success-color: #008489; /* Airbnb Teal */
+  --warning-color: #FFB400;
+  --danger-color: #EF4444;
+  --background-color: #FFFFFF;
+  --card-background: #FFFFFF;
+  --text-primary: #222222; /* Airbnb Black */
+  --text-secondary: #717171;
+  --border-color: #DDDDDD;
 }
 
 /* Base Styles */
@@ -25,8 +26,7 @@ html {
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-    'Helvetica Neue', Arial, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background-color: var(--background-color);
   color: var(--text-primary);
   line-height: 1.5;

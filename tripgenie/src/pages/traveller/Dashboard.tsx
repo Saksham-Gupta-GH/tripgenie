@@ -132,12 +132,12 @@ export const TravellerDashboard: React.FC = () => {
       <div className="space-y-6">
         {/* Welcome Section */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold text-gray-900">
-              Welcome, {user?.name}!
+          <div>
+            <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">
+              Where to, {user?.name.split(' ')[0]}?
             </h1>
-            <p className="text-gray-600 mt-1">
-              Ready for your next adventure?
+            <p className="text-gray-500 mt-2 font-medium">
+              Find expert itineraries for your next trip.
             </p>
           </div>
           
@@ -306,60 +306,56 @@ export const TravellerDashboard: React.FC = () => {
                 </div>
               ) : (
                 filteredPlans.map((plan) => (
-                  <Card key={plan.id} className="group overflow-hidden hover:shadow-2xl transition-all duration-300 border-none shadow-lg">
+                  <Card key={plan.id} className="group overflow-hidden hover:shadow-xl transition-all duration-500 border-none bg-white rounded-3xl">
                     {plan.imageUrls && plan.imageUrls.length > 0 && (
-                      <div className="relative h-48 overflow-hidden">
+                      <div className="relative aspect-[4/3] overflow-hidden rounded-2xl m-2">
                         <img
                           src={plan.imageUrls[0]}
                           alt={plan.destination}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                         />
-                        <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-red-600 shadow-sm">
+                        <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-xl text-xs font-bold text-gray-900 shadow-sm">
                           ${plan.budget}
                         </div>
                       </div>
                     )}
-                    <CardContent className="p-5">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <h3 className="font-bold text-lg text-gray-900 group-hover:text-red-600 transition-colors">
-                            {plan.title}
-                          </h3>
-                          <div className="flex items-center text-sm text-gray-500 mt-1">
-                            <MapPin className="w-3 h-3 mr-1" />
-                            {plan.destination}
-                          </div>
-                        </div>
+                    <CardContent className="p-5 pt-2">
+                      <div className="flex justify-between items-start mb-1">
+                        <h3 className="font-bold text-lg text-gray-900 line-clamp-1">
+                          {plan.title}
+                        </h3>
+                      </div>
+                      <div className="flex items-center text-sm text-gray-500 font-medium mb-4">
+                        <MapPin className="w-3.5 h-3.5 mr-1 text-red-500" />
+                        {plan.destination}
                       </div>
                       
-                      <div className="flex items-center gap-4 mt-4 mb-6">
-                        <div className="flex items-center text-xs font-bold text-gray-400 uppercase tracking-wider">
+                      <div className="flex items-center gap-4 py-3 border-t border-gray-100">
+                        <div className="flex items-center text-xs font-bold text-gray-700 uppercase tracking-wide">
                           <Calendar className="w-4 h-4 mr-1.5 text-red-500" />
                           {plan.numberOfDays} Days
                         </div>
-                        <div className="h-4 w-px bg-gray-200"></div>
-                        <div className="flex items-center text-xs font-bold text-gray-400 uppercase tracking-wider">
-                          <Star className="w-4 h-4 mr-1.5 text-yellow-500 fill-yellow-500" />
+                        <div className="flex items-center text-xs font-bold text-gray-700 uppercase tracking-wide">
+                          <Star className="w-4 h-4 mr-1.5 text-red-500 fill-red-500" />
                           {plan.ratings && plan.ratings.length > 0 
                             ? (plan.ratings.reduce((a, b) => a + b.rating, 0) / plan.ratings.length).toFixed(1)
                             : 'New'}
                         </div>
                       </div>
 
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 mt-2">
                         <Button
-                          className="flex-1"
+                          className="flex-1 rounded-xl font-bold py-2.5"
                           onClick={() => navigate(`/traveller/plan-details/${plan.id}`)}
                         >
-                          View Plan
+                          View Details
                         </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
+                        <button
                           onClick={() => handleChoosePlan(plan.id)}
+                          className="p-2.5 rounded-xl bg-gray-50 text-red-500 hover:bg-red-50 transition-colors border border-gray-100"
                         >
-                          <Sparkles className="w-4 h-4 text-red-600" />
-                        </Button>
+                          <Sparkles className="w-5 h-5" />
+                        </button>
                       </div>
                     </CardContent>
                   </Card>

@@ -15,13 +15,13 @@ interface AuthContextType {
   firebaseUser: FirebaseUser | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
+  login: (email: string, password: string, rememberMe?: boolean) => Promise<User>;
   register: (
     email: string,
     password: string,
     name: string,
     role: UserRole
-  ) => Promise<void>;
+  ) => Promise<User>;
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
 }
@@ -63,12 +63,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     email: string,
     password: string,
     rememberMe: boolean = true
-  ): Promise<void> => {
+  ): Promise<User> => {
     setIsLoading(true);
     try {
       const userData = await authService.login(email, password, rememberMe);
       setUser(userData);
       setFirebaseUser(auth.currentUser);
+      return userData;
     } finally {
       setIsLoading(false);
     }
@@ -79,12 +80,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     password: string,
     name: string,
     role: UserRole
-  ): Promise<void> => {
+  ): Promise<User> => {
     setIsLoading(true);
     try {
       const userData = await authService.register(email, password, name, role);
       setUser(userData);
       setFirebaseUser(auth.currentUser);
+      return userData;
     } finally {
       setIsLoading(false);
     }

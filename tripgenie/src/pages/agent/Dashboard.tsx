@@ -14,11 +14,12 @@ import {
   Sparkles,
   Trash2,
   Calendar,
-  DollarSign
+  DollarSign,
+  MapPin
 } from 'lucide-react';
 
 export const AgentDashboard: React.FC = () => {
-  const { user, firebaseUser } = useAuth();
+  const { firebaseUser } = useAuth();
   const navigate = useNavigate();
   const [agentPlans, setAgentPlans] = useState<Plan[]>([]);
   const [stats, setStats] = useState({
@@ -74,11 +75,11 @@ export const AgentDashboard: React.FC = () => {
         {/* Welcome */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Welcome, {user?.name}!
+            <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">
+              Manage Places
             </h1>
-            <p className="text-gray-600 mt-1">
-              Curate travel experiences and manage your plans
+            <p className="text-gray-500 mt-2 font-medium">
+              Curate and manage your expert travel itineraries.
             </p>
           </div>
           <Button
@@ -90,22 +91,18 @@ export const AgentDashboard: React.FC = () => {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="p-3 bg-red-100 rounded-lg">
-                  <Briefcase className="w-6 h-6 text-red-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm text-gray-600">Your Plans</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {stats.totalPlans}
-                  </p>
-                </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+            <div className="flex items-center gap-4">
+              <div className="p-4 bg-red-50 rounded-2xl">
+                <Briefcase className="w-8 h-8 text-red-500" />
               </div>
-            </CardContent>
-          </Card>
+              <div>
+                <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Active Plans</p>
+                <p className="text-3xl font-black text-gray-900">{stats.totalPlans}</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Your Plans */}
@@ -115,46 +112,49 @@ export const AgentDashboard: React.FC = () => {
           </CardHeader>
           <CardContent>
             {agentPlans.length === 0 ? (
-              <div className="text-center py-8">
-                <List className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500">You haven't created any plans yet</p>
+              <div className="text-center py-20 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
+                <List className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-xl text-gray-500 font-bold">You haven't created any plans yet</p>
+                <Button className="mt-6" onClick={() => navigate('/agent/create-plan')}>Create Your First Plan</Button>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {agentPlans.map((plan) => (
                   <div
                     key={plan.id}
                     onClick={() => navigate(`/traveller/plan-details/${plan.id}`)}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                    className="group flex flex-col p-5 bg-white border border-gray-100 rounded-3xl hover:shadow-xl transition-all duration-300 cursor-pointer relative"
                   >
-                    <div>
-                      <h3 className="font-bold text-lg text-gray-900 truncate max-w-sm">
-                        {plan.title}
-                      </h3>
-                      <h4 className="font-medium text-gray-700">
-                        {plan.destination}
-                      </h4>
-                      <div className="flex items-center space-x-4 mt-1 text-sm text-gray-600">
-                        <span className="flex items-center">
-                          <Calendar className="w-4 h-4 mr-1" />
-                          {plan.numberOfDays} days
-                        </span>
-                        <span className="flex items-center">
-                          <DollarSign className="w-4 h-4 mr-1" />${plan.budget}
-                        </span>
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="font-bold text-xl text-gray-900 group-hover:text-red-500 transition-colors line-clamp-1">
+                          {plan.title}
+                        </h3>
+                        <p className="text-sm font-medium text-gray-500 mt-1 flex items-center">
+                          <MapPin className="w-3.5 h-3.5 mr-1 text-red-500" />
+                          {plan.destination}
+                        </p>
                       </div>
-                    </div>
-                    <div className="flex items-center space-x-2 mt-4 sm:mt-0">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-red-600 border-red-200 hover:bg-red-50"
-                        leftIcon={<Trash2 className="w-4 h-4" />}
+                      <button
                         onClick={(e) => handleDeletePlan(e, plan.id)}
+                        className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
                       >
-                        Delete
-                      </Button>
-                      <ArrowRight className="w-5 h-5 text-gray-400 ml-2" />
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
+
+                    <div className="flex items-center gap-6 mt-auto pt-4 border-t border-gray-50">
+                      <div className="flex items-center text-xs font-bold text-gray-700 uppercase tracking-wide">
+                        <Calendar className="w-4 h-4 mr-2 text-red-500" />
+                        {plan.numberOfDays} Days
+                      </div>
+                      <div className="flex items-center text-xs font-bold text-gray-700 uppercase tracking-wide">
+                        <DollarSign className="w-4 h-4 mr-1 text-red-500" />
+                        ${plan.budget}
+                      </div>
+                      <div className="ml-auto">
+                        <ArrowRight className="w-5 h-5 text-gray-300 group-hover:text-red-500 group-hover:translate-x-1 transition-all" />
+                      </div>
                     </div>
                   </div>
                 ))}
