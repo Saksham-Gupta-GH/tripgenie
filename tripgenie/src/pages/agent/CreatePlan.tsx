@@ -80,7 +80,7 @@ export const CreatePlan: React.FC = () => {
       navigate('/agent/dashboard');
     } catch (error) {
       console.error('Error creating plan:', error);
-      alert('Failed to create plan. Please try again.');
+      alert('Failed to create plan: ' + (error instanceof Error ? error.message : String(error)));
     } finally {
       setIsLoading(false);
     }
