@@ -133,9 +133,14 @@ export const tripService = {
         throw new Error('Plan already selected');
       }
 
+      // Get plan to find agentId
+      const plan = await tripService.getPlanById(planId);
+      if (!plan) throw new Error('Plan not found');
+
       const docRef = await addDoc(collection(db, SELECTED_PLANS_COLLECTION), {
         userId,
         planId,
+        agentId: plan.createdBy,
         travelDate: Timestamp.fromDate(travelDate),
         addedAt: serverTimestamp(),
         status: 'pending'
@@ -208,23 +213,17 @@ export const tripService = {
 
   getAllBookingsForAgent: async (agentId: string): Promise<{plan: Plan, booking: SelectedPlan}[]> => {
     try {
-      // Get all plans created by this agent
-      const agentPlans = await tripService.getPlansByCreator(agentId);
-      const planIds = agentPlans.map(p => p.id);
-      
-      if (planIds.length === 0) return [];
-
-      // Note: Firestore 'in' query supports max 10 values. For simplicity in this demo, 
-      // we'll fetch all bookings and filter in memory if planIds > 10, or chunk it.
-      // But let's just fetch all and filter in memory to avoid index limits here.
-      const q = query(collection(db, SELECTED_PLANS_COLLECTION));
+      const q = query(
+        collection(db, SELECTED_PLANS_COLLECTION),
+        where('agentId', '==', agentId)
+      );
       const snapshot = await getDocs(q);
       
       const results = [];
       for (const docSnap of snapshot.docs) {
         const data = docSnap.data();
-        if (planIds.includes(data.planId)) {
-          const plan = agentPlans.find(p => p.id === data.planId)!;
+        const plan = await tripService.getPlanById(data.planId);
+        if (plan) {
           results.push({
             plan,
             booking: {
