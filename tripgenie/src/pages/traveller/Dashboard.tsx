@@ -16,9 +16,12 @@ import {
   DollarSign,
   ArrowRight,
   Sparkles,
-  BookOpen,
   Search,
-  MapPin
+  MapPin,
+  Map as MapIcon,
+  ChevronDown,
+  ChevronUp,
+  Star
 } from 'lucide-react';
 
 // Fix for default marker icon missing in Leaflet
@@ -40,6 +43,9 @@ export const TravellerDashboard: React.FC = () => {
   const [isDateModalOpen, setIsDateModalOpen] = useState(false);
   const [pendingPlanId, setPendingPlanId] = useState<string | null>(null);
   const [travelDate, setTravelDate] = useState('');
+  
+  const [showMap, setShowMap] = useState(false);
+  const [showAllPlans, setShowAllPlans] = useState(false);
 
   const loadData = useCallback(async () => {
     if (!firebaseUser) return;
@@ -126,20 +132,29 @@ export const TravellerDashboard: React.FC = () => {
         {/* Welcome Section */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Welcome back, {user?.name}!
+            <h1 className="text-3xl font-bold text-gray-900">
+              Welcome, {user?.name}!
             </h1>
             <p className="text-gray-600 mt-1">
-              Discover and select expert travel plans tailored for you.
+              Ready for your next adventure?
             </p>
+          </div>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              leftIcon={<MapIcon className="w-4 h-4" />}
+              onClick={() => setShowMap(!showMap)}
+            >
+              {showMap ? 'Hide Map' : 'Explore Map'}
+            </Button>
           </div>
         </div>
 
         {/* Selected Trips */}
         {recentPlans.length > 0 && (
           <Card>
-            <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <CardTitle>Your Selected Plans</CardTitle>
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-gray-100">
+              <CardTitle>Your Upcoming Trips</CardTitle>
               <Button
                 variant="ghost"
                 size="sm"
@@ -149,27 +164,27 @@ export const TravellerDashboard: React.FC = () => {
                 View All
               </Button>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                 {recentPlans.map(({ plan }) => (
                   <div
                     key={plan.id}
                     onClick={() => navigate(`/traveller/plan-details/${plan.id}`)}
-                    className="flex flex-col p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                    className="flex flex-col p-4 bg-red-50 rounded-xl hover:bg-red-100 transition-all cursor-pointer border border-red-100 shadow-sm"
                   >
                     <h3 className="font-bold text-gray-900 truncate">
                       {plan.title}
                     </h3>
-                    <h4 className="font-medium text-gray-700 truncate mt-1">
+                    <h4 className="font-medium text-gray-600 truncate mt-1">
                       {plan.destination}
                     </h4>
-                    <div className="flex items-center space-x-4 mt-2 text-sm text-gray-600">
+                    <div className="flex items-center space-x-4 mt-3 text-sm text-gray-500 font-medium">
                       <span className="flex items-center">
-                        <Calendar className="w-4 h-4 mr-1" />
-                        {plan.numberOfDays} days
+                        <Calendar className="w-4 h-4 mr-1 text-red-500" />
+                        {plan.numberOfDays}d
                       </span>
                       <span className="flex items-center">
-                        <DollarSign className="w-4 h-4 mr-1" />${plan.budget}
+                        <DollarSign className="w-4 h-4 mr-1 text-red-500" />${plan.budget}
                       </span>
                     </div>
                   </div>
@@ -179,195 +194,207 @@ export const TravellerDashboard: React.FC = () => {
           </Card>
         )}
 
-        {/* Interactive Map Explorer */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <MapPin className="w-5 h-5 text-red-600 mr-2" />
-              Explore Destinations Visually
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-96 w-full rounded-lg overflow-hidden border border-gray-300 relative z-0">
-              <MapContainer
-                key={`${mapCenter.lat}-${mapCenter.lng}-${searchQuery}`} // Force re-render on search change to recenter
-                center={[mapCenter.lat, mapCenter.lng]} 
-                zoom={mapZoom} 
-                style={{ height: '100%', width: '100%' }}
-              >
-                <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-                  url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-                />
-                {filteredPlans.map(plan => plan.location && (
-                  <Marker key={plan.id} position={[plan.location.lat, plan.location.lng]}>
-                    <Popup>
-                      <div className="p-2">
-                        <h3 className="font-bold text-lg mb-1">{plan.title}</h3>
-                        <p className="text-sm text-gray-600 mb-2">{plan.exactAddress || plan.destination}</p>
-                        <Button size="sm" onClick={() => navigate(`/traveller/plan-details/${plan.id}`)} className="w-full">
-                          View Details
-                        </Button>
-                      </div>
-                    </Popup>
-                  </Marker>
-                ))}
-              </MapContainer>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Interactive Map Explorer (Conditional) */}
+        {showMap && (
+          <Card className="overflow-hidden border-2 border-red-100">
+            <CardHeader className="bg-red-50">
+              <CardTitle className="flex items-center text-red-700">
+                <MapPin className="w-5 h-5 mr-2" />
+                World Explorer
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="h-[500px] w-full relative z-0">
+                <MapContainer
+                  key={`${mapCenter.lat}-${mapCenter.lng}-${searchQuery}`} 
+                  center={[mapCenter.lat, mapCenter.lng]} 
+                  zoom={mapZoom} 
+                  style={{ height: '100%', width: '100%' }}
+                >
+                  <TileLayer
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                    url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+                  />
+                  {filteredPlans.map(plan => plan.location && (
+                    <Marker key={plan.id} position={[plan.location.lat, plan.location.lng]}>
+                      <Popup>
+                        <div className="p-2 min-w-[150px]">
+                          <h3 className="font-bold text-gray-900 mb-1">{plan.title}</h3>
+                          <p className="text-xs text-gray-600 mb-3">{plan.destination}</p>
+                          <Button size="sm" onClick={() => navigate(`/traveller/plan-details/${plan.id}`)} className="w-full">
+                            Details
+                          </Button>
+                        </div>
+                      </Popup>
+                    </Marker>
+                  ))}
+                </MapContainer>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-        {/* Expert Travel Plans */}
-        <Card className="h-full">
-          <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <CardTitle className="flex items-center">
-              <Sparkles className="w-5 h-5 text-red-600 mr-2" />
-              Discover Expert Travel Plans
-            </CardTitle>
-            <div className="relative w-full sm:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search destination or address..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none text-sm"
-              />
+        {/* Big Discover Button */}
+        <div className="flex justify-center py-4">
+          <button 
+            onClick={() => setShowAllPlans(!showAllPlans)}
+            className="group relative inline-flex items-center justify-center px-10 py-6 font-bold text-white transition-all duration-200 bg-red-600 font-pj rounded-2xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-600 hover:bg-red-700 shadow-xl"
+          >
+            <Sparkles className="w-6 h-6 mr-3 animate-pulse" />
+            <span className="text-xl">Discover Expert Travel Plans</span>
+            {showAllPlans ? <ChevronUp className="w-6 h-6 ml-3" /> : <ChevronDown className="w-6 h-6 ml-3" />}
+          </button>
+        </div>
+
+        {/* Expert Travel Plans List (Conditional) */}
+        {showAllPlans && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+              <h2 className="text-2xl font-bold text-gray-900">Featured Itineraries</h2>
+              <div className="relative w-full md:w-80">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search destination or address..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none shadow-sm"
+                />
+              </div>
             </div>
-          </CardHeader>
-          {uniqueDestinations.length > 0 && (
-            <div className="px-6 pb-2">
-              <p className="text-sm text-gray-500 mb-2 font-medium">Browse by Destination:</p>
+
+            {uniqueDestinations.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => setSearchQuery('')}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
                     searchQuery === '' 
-                      ? 'bg-red-600 text-white' 
-                      : 'bg-red-50 text-red-700 hover:bg-red-100 border border-red-200'
+                      ? 'bg-red-600 text-white shadow-md' 
+                      : 'bg-white text-gray-600 hover:bg-red-50 border border-gray-200'
                   }`}
                 >
-                  All Destinations
+                  All
                 </button>
                 {uniqueDestinations.map(dest => (
                   <button
                     key={dest}
                     onClick={() => setSearchQuery(dest)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                    className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
                       searchQuery.toLowerCase() === dest.toLowerCase()
-                        ? 'bg-red-600 text-white'
-                        : 'bg-red-50 text-red-700 hover:bg-red-100 border border-red-200'
+                        ? 'bg-red-600 text-white shadow-md'
+                        : 'bg-white text-gray-600 hover:bg-red-50 border border-gray-200'
                     }`}
                   >
                     {dest}
                   </button>
                 ))}
               </div>
-            </div>
-          )}
-          <CardContent>
-            {allPlans.length === 0 ? (
-              <div className="text-center py-8">
-                <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500">No expert plans available at the moment.</p>
-              </div>
-            ) : filteredPlans.length === 0 ? (
-              <div className="text-center py-8">
-                <Search className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500">No plans found matching your search.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredPlans.map((plan) => (
-                  <div
-                    key={plan.id}
-                    className="flex flex-col p-5 bg-red-50 rounded-xl border border-red-100 shadow-sm"
-                  >
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredPlans.length === 0 ? (
+                <div className="col-span-full text-center py-20 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
+                  <Search className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <p className="text-xl text-gray-500 font-medium">No plans found matching your search.</p>
+                  <Button variant="ghost" onClick={() => setSearchQuery('')} className="mt-4">Clear Search</Button>
+                </div>
+              ) : (
+                filteredPlans.map((plan) => (
+                  <Card key={plan.id} className="group overflow-hidden hover:shadow-2xl transition-all duration-300 border-none shadow-lg">
                     {plan.imageUrls && plan.imageUrls.length > 0 && (
-                      <div className="mb-4 overflow-hidden rounded-lg border border-red-100 bg-white">
+                      <div className="relative h-48 overflow-hidden">
                         <img
                           src={plan.imageUrls[0]}
-                          alt={`${plan.destination} preview`}
-                          className="h-36 w-full object-cover"
-                          loading="lazy"
+                          alt={plan.destination}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                         />
+                        <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-red-600 shadow-sm">
+                          ${plan.budget}
+                        </div>
                       </div>
                     )}
-                    <div className="flex items-start justify-between">
-                      <div
-                        className="cursor-pointer"
-                        onClick={() => navigate(`/traveller/plan-details/${plan.id}`)}
-                      >
-                        <h3 className="font-bold text-lg text-gray-900 group-hover:text-red-700 transition-colors">
-                          {plan.title}
-                        </h3>
-                        <p className="text-sm font-medium text-gray-700 mt-1">
-                          {plan.destination}
-                        </p>
-                        {plan.exactAddress && (
-                          <p className="text-xs text-gray-500 mt-1">
-                            {plan.exactAddress}
-                          </p>
-                        )}
-                        <p className="text-xs text-red-600 font-semibold mt-2">
-                          Curated by Expert Agent
-                        </p>
+                    <CardContent className="p-5">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h3 className="font-bold text-lg text-gray-900 group-hover:text-red-600 transition-colors">
+                            {plan.title}
+                          </h3>
+                          <div className="flex items-center text-sm text-gray-500 mt-1">
+                            <MapPin className="w-3 h-3 mr-1" />
+                            {plan.destination}
+                          </div>
+                        </div>
                       </div>
-                      <Button
-                        size="sm"
-                        variant="primary"
-                        isLoading={isSelecting === plan.id}
-                        onClick={() => handleChoosePlan(plan.id)}
-                      >
-                        Select Plan
-                      </Button>
-                    </div>
-                    
-                    <div className="flex items-center space-x-6 mt-4 text-sm text-gray-700">
-                      <span className="flex items-center">
-                        <Calendar className="w-4 h-4 mr-1.5 text-red-600" />
-                        {plan.numberOfDays} <span className="text-gray-500 ml-1">days</span>
-                      </span>
-                      <span className="flex items-center">
-                        <DollarSign className="w-4 h-4 mr-1.5 text-red-600" />
-                        {plan.budget} <span className="text-gray-500 ml-1">est.</span>
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                      
+                      <div className="flex items-center gap-4 mt-4 mb-6">
+                        <div className="flex items-center text-xs font-bold text-gray-400 uppercase tracking-wider">
+                          <Calendar className="w-4 h-4 mr-1.5 text-red-500" />
+                          {plan.numberOfDays} Days
+                        </div>
+                        <div className="h-4 w-px bg-gray-200"></div>
+                        <div className="flex items-center text-xs font-bold text-gray-400 uppercase tracking-wider">
+                          <Star className="w-4 h-4 mr-1.5 text-yellow-500 fill-yellow-500" />
+                          {plan.ratings && plan.ratings.length > 0 
+                            ? (plan.ratings.reduce((a, b) => a + b.rating, 0) / plan.ratings.length).toFixed(1)
+                            : 'New'}
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2">
+                        <Button
+                          className="flex-1"
+                          onClick={() => navigate(`/traveller/plan-details/${plan.id}`)}
+                        >
+                          View Plan
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleChoosePlan(plan.id)}
+                        >
+                          <Sparkles className="w-4 h-4 text-red-600" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+          </div>
+        )}
       </div>
+      
       <Modal
         isOpen={isDateModalOpen}
         onClose={() => setIsDateModalOpen(false)}
-        title="Select Travel Date"
+        title="Quick Book"
         size="sm"
       >
         <div className="space-y-4">
+          <p className="text-sm text-gray-600">Select your preferred travel date to get started with this expert plan.</p>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Travel Date
+            <label className="block text-sm font-bold text-gray-700 mb-2">
+              Preferred Start Date
             </label>
             <input
               type="date"
               value={travelDate}
               onChange={(e) => setTravelDate(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 outline-none"
               required
             />
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3 pt-2">
             <Button
+              className="flex-1"
               onClick={handleConfirmSelect}
-              isLoading={pendingPlanId ? isSelecting === pendingPlanId : false}
+              isLoading={isSelecting !== null}
             >
-              Confirm
+              Continue to Details
             </Button>
             <Button
               variant="outline"
+              className="flex-1"
               onClick={() => setIsDateModalOpen(false)}
             >
               Cancel

@@ -17,7 +17,9 @@ import {
   ArrowLeft,
   List,
   MapPin,
-  Star
+  Star,
+  CreditCard,
+  Smartphone
 } from 'lucide-react';
 
 // Fix for default marker icon missing in Leaflet
@@ -35,8 +37,11 @@ export const PlanDetails: React.FC = () => {
   const [plan, setPlan] = useState<Plan | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [bookingDate, setBookingDate] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'upi'>('card');
+  const [paymentValue, setPaymentValue] = useState('');
   const [rating, setRating] = useState(0);
   const [review, setReview] = useState('');
+  const [isBooked, setIsBooked] = useState(false);
   
   const loadPlan = useCallback(async () => {
     if (!planId) return;
@@ -62,10 +67,16 @@ export const PlanDetails: React.FC = () => {
       alert('Please select a travel date');
       return;
     }
+    if (!paymentValue) {
+      alert(`Please enter your ${paymentMethod === 'card' ? 'Card Number' : 'UPI ID'}`);
+      return;
+    }
     try {
       await tripService.selectPlan(firebaseUser.uid, planId!, new Date(bookingDate));
-      alert('Booking submitted! Waiting for agent confirmation.');
-      navigate('/traveller/my-trips');
+      alert('Booking submitted with payment! Waiting for agent confirmation.');
+      setIsBooked(true);
+      // Wait a bit then navigate
+      setTimeout(() => navigate('/traveller/my-trips'), 5000);
     } catch (e: any) {
       alert(e.message || 'Failed to book.');
     }
@@ -89,6 +100,8 @@ export const PlanDetails: React.FC = () => {
   const avgRating = plan.ratings && plan.ratings.length > 0 
     ? (plan.ratings.reduce((a, b) => a + b.rating, 0) / plan.ratings.length).toFixed(1)
     : 'No ratings yet';
+
+  const qrValue = `TripGenie Booking:\nPlan: ${plan.title}\nDestination: ${plan.destination}\nUser: ${user?.name || 'Traveller'}\nDate: ${bookingDate}\nStatus: PENDING_CONFIRMATION`;
 
   return (
     <Layout>
@@ -130,23 +143,64 @@ export const PlanDetails: React.FC = () => {
               </div>
             )}
 
-            {user?.role === 'traveller' && (
-              <div className="mt-8 p-6 bg-red-50 rounded-lg flex flex-col md:flex-row justify-between items-center gap-6">
-                <div className="flex-1">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Ready to Book?</h3>
-                  <p className="text-sm text-gray-600 mb-4">Select a travel date to request this booking from the agent.</p>
-                  <input type="date" className="border border-gray-300 p-2 rounded w-full mb-4" value={bookingDate} onChange={(e) => setBookingDate(e.target.value)} />
-                  <Button onClick={handleBook} className="w-full">Request Booking</Button>
+            {user?.role === 'traveller' && !isBooked && (
+              <div className="mt-8 p-6 bg-red-50 rounded-lg border border-red-100">
+                <h3 className="text-xl font-bold text-gray-900 mb-4">Complete Your Booking</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Travel Date</label>
+                    <input type="date" className="border border-gray-300 p-2 rounded w-full" value={bookingDate} onChange={(e) => setBookingDate(e.target.value)} />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
+                    <div className="flex gap-4">
+                      <button 
+                        className={`flex-1 flex items-center justify-center gap-2 p-2 rounded border ${paymentMethod === 'card' ? 'bg-red-600 text-white border-red-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                        onClick={() => { setPaymentMethod('card'); setPaymentValue(''); }}
+                      >
+                        <CreditCard className="w-4 h-4" /> Card
+                      </button>
+                      <button 
+                        className={`flex-1 flex items-center justify-center gap-2 p-2 rounded border ${paymentMethod === 'upi' ? 'bg-red-600 text-white border-red-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                        onClick={() => { setPaymentMethod('upi'); setPaymentValue(''); }}
+                      >
+                        <Smartphone className="w-4 h-4" /> UPI
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex flex-col items-center bg-white p-4 rounded-xl shadow-sm">
-                  <p className="text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Scan to view</p>
-                  <QRCodeSVG value={window.location.href} size={120} />
+
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {paymentMethod === 'card' ? 'Card Number (Dummy)' : 'UPI ID (Dummy)'}
+                  </label>
+                  <input 
+                    type="text" 
+                    placeholder={paymentMethod === 'card' ? 'xxxx-xxxx-xxxx-xxxx' : 'user@upi'} 
+                    className="border border-gray-300 p-2 rounded w-full"
+                    value={paymentValue}
+                    onChange={(e) => setPaymentValue(e.target.value)}
+                  />
                 </div>
+
+                <Button onClick={handleBook} className="w-full">Securely Book Now</Button>
+              </div>
+            )}
+
+            {isBooked && (
+              <div className="mt-8 p-8 bg-green-50 rounded-xl border border-green-200 text-center flex flex-col items-center">
+                <div className="bg-white p-6 rounded-2xl shadow-lg mb-4">
+                  <QRCodeSVG value={qrValue} size={200} />
+                </div>
+                <h3 className="text-2xl font-bold text-green-800 mb-2">Booking Requested!</h3>
+                <p className="text-green-700">Scan the QR code above to see your trip details. Redirecting to your trips in a few seconds...</p>
               </div>
             )}
             
             {user?.role === 'traveller' && (
-              <div className="mt-8">
+              <div className="mt-12 border-t pt-8">
                 <h3 className="text-xl font-bold mb-4">Rate this Plan</h3>
                 <div className="flex gap-2 mb-2">
                   {[1,2,3,4,5].map(star => (
@@ -154,7 +208,7 @@ export const PlanDetails: React.FC = () => {
                   ))}
                 </div>
                 <textarea className="w-full border border-gray-300 rounded p-2 mb-2" placeholder="Write a review..." value={review} onChange={(e) => setReview(e.target.value)} />
-                <Button onClick={handleRate} disabled={rating === 0}>Submit Review</Button>
+                <Button onClick={handleRate} disabled={rating === 0} variant="outline">Submit Review</Button>
               </div>
             )}
           </CardContent>
@@ -173,7 +227,7 @@ export const PlanDetails: React.FC = () => {
                   Day {index + 1}
                 </CardTitle>
               </CardHeader>
-              <CardContent><p className="text-gray-700 whitespace-pre-wrap">{dayText}</p></CardContent>
+              <CardContent><p className="text-gray-700 whitespace-pre-wrap leading-relaxed">{dayText}</p></CardContent>
             </Card>
           ))}
         </div>
