@@ -105,6 +105,7 @@ export const TravellerDashboard: React.FC = () => {
   const filteredPlans = allPlans.filter(plan => {
     const q = searchQuery.toLowerCase();
     return plan.destination.toLowerCase().includes(q) || 
+           plan.title.toLowerCase().includes(q) ||
            (plan.exactAddress && plan.exactAddress.toLowerCase().includes(q));
   });
 
@@ -131,7 +132,7 @@ export const TravellerDashboard: React.FC = () => {
       <div className="space-y-6">
         {/* Welcome Section */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
+          <div className="flex-1">
             <h1 className="text-3xl font-bold text-gray-900">
               Welcome, {user?.name}!
             </h1>
@@ -139,17 +140,28 @@ export const TravellerDashboard: React.FC = () => {
               Ready for your next adventure?
             </p>
           </div>
-          <div className="flex gap-2">
+          
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search location..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-full focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none shadow-sm transition-all"
+              />
+            </div>
             <button 
               onClick={() => setShowMap(!showMap)}
-              className={`flex items-center gap-2 px-6 py-3 rounded-full font-bold transition-all duration-300 shadow-lg hover:shadow-red-200/50 ${
+              className={`flex items-center gap-2 px-6 py-3 rounded-full font-bold transition-all duration-300 shadow-lg hover:shadow-red-200/50 w-full sm:w-auto justify-center ${
                 showMap 
                   ? 'bg-gray-800 text-white hover:bg-gray-900' 
                   : 'bg-red-600 text-white hover:bg-red-700 animate-pulse-slow'
               }`}
             >
               <MapIcon className={`w-5 h-5 ${!showMap ? 'animate-bounce' : ''}`} />
-              {showMap ? 'Close World Explorer' : 'Explore Destination Map'}
+              {showMap ? 'Close Map' : 'Explore Map'}
             </button>
           </div>
         </div>
@@ -255,16 +267,6 @@ export const TravellerDashboard: React.FC = () => {
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
               <h2 className="text-2xl font-bold text-gray-900">Featured Itineraries</h2>
-              <div className="relative w-full md:w-80">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search destination or address..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none shadow-sm"
-                />
-              </div>
             </div>
 
             {uniqueDestinations.length > 0 && (
