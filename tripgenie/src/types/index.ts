@@ -20,6 +20,7 @@ export interface Plan {
   itinerary: string[];
   imageUrls?: string[];
   location?: { lat: number; lng: number };
+  exactAddress?: string;
   createdBy: string;
   createdAt: Date;
   ratings?: { userId: string; rating: number; review?: string }[];

@@ -23,6 +23,7 @@ export const CreatePlan: React.FC = () => {
   const [formData, setFormData] = useState({
     title: '',
     destination: '',
+    exactAddress: '',
     budget: 1000,
     numberOfDays: 3,
     itinerary: ['', '', ''],
@@ -66,6 +67,7 @@ export const CreatePlan: React.FC = () => {
       await tripService.createPlan({
         title: formData.title,
         destination: formData.destination,
+        exactAddress: formData.exactAddress,
         budget: formData.budget,
         numberOfDays: formData.numberOfDays,
         itinerary: formData.itinerary,
@@ -143,9 +145,18 @@ export const CreatePlan: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
                   <MapIcon className="w-4 h-4 mr-1 text-gray-500" />
-                  Exact Pin Location (Optional)
+                  Exact Pin Location & Address (Optional)
                 </label>
-                <p className="text-xs text-gray-500 mb-2">Click on the map to place a pin for the primary pickup or destination location.</p>
+                <div className="mb-4">
+                  <input
+                    type="text"
+                    value={formData.exactAddress}
+                    onChange={(e) => setFormData(prev => ({ ...prev, exactAddress: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none"
+                    placeholder="Manually write the exact address (e.g. A Building, B Street, Mumbai)"
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mb-2">You can also click on the map to place a precise pin.</p>
                 <LocationPicker 
                   position={formData.location}
                   setPosition={(pos) => setFormData(prev => ({ ...prev, location: pos }))}

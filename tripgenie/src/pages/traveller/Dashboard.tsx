@@ -8,6 +8,9 @@ import { Modal } from '../../components/Modal';
 import { Loading } from '../../components/Loading';
 import { tripService } from '../../services/tripService';
 import type { Plan } from '../../types';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
 import {
   Calendar,
   DollarSign,
@@ -15,7 +18,16 @@ import {
   Sparkles,
   BookOpen,
   Search,
+  MapPin
 } from 'lucide-react';
+
+// Fix for default marker icon missing in Leaflet
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
 
 export const TravellerDashboard: React.FC = () => {
   const { user, firebaseUser } = useAuth();
@@ -84,9 +96,11 @@ export const TravellerDashboard: React.FC = () => {
     }
   };
 
-  const filteredPlans = allPlans.filter(plan => 
-    plan.destination.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredPlans = allPlans.filter(plan => {
+    const q = searchQuery.toLowerCase();
+    return plan.destination.toLowerCase().includes(q) || 
+           (plan.exactAddress && plan.exactAddress.toLowerCase().includes(q));
+  });
 
   const uniqueDestinations = Array.from(
     new Set(allPlans.map((p) => p.destination))
@@ -101,6 +115,10 @@ export const TravellerDashboard: React.FC = () => {
   }
 
   const recentPlans = myPlans.slice(0, 3);
+
+  // Use map center based on first filtered plan with a location, or default to world view
+  const mapCenter = filteredPlans.find(p => p.location)?.location || { lat: 20.5937, lng: 78.9629 };
+  const mapZoom = filteredPlans.length > 0 && filteredPlans[0].location ? 5 : 2;
 
   return (
     <Layout>
@@ -161,21 +179,59 @@ export const TravellerDashboard: React.FC = () => {
           </Card>
         )}
 
+        {/* Interactive Map Explorer */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <MapPin className="w-5 h-5 text-red-600 mr-2" />
+              Explore Destinations Visually
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-96 w-full rounded-lg overflow-hidden border border-gray-300 relative z-0">
+              <MapContainer
+                key={`${mapCenter.lat}-${mapCenter.lng}-${searchQuery}`} // Force re-render on search change to recenter
+                center={[mapCenter.lat, mapCenter.lng]} 
+                zoom={mapZoom} 
+                style={{ height: '100%', width: '100%' }}
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                {filteredPlans.map(plan => plan.location && (
+                  <Marker key={plan.id} position={[plan.location.lat, plan.location.lng]}>
+                    <Popup>
+                      <div className="p-2">
+                        <h3 className="font-bold text-lg mb-1">{plan.title}</h3>
+                        <p className="text-sm text-gray-600 mb-2">{plan.exactAddress || plan.destination}</p>
+                        <Button size="sm" onClick={() => navigate(`/traveller/plan-details/${plan.id}`)} className="w-full">
+                          View Details
+                        </Button>
+                      </div>
+                    </Popup>
+                  </Marker>
+                ))}
+              </MapContainer>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Expert Travel Plans */}
         <Card className="h-full">
           <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <CardTitle className="flex items-center">
-              <Sparkles className="w-5 h-5 text-purple-600 mr-2" />
+              <Sparkles className="w-5 h-5 text-red-600 mr-2" />
               Discover Expert Travel Plans
             </CardTitle>
             <div className="relative w-full sm:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search by destination..."
+                placeholder="Search destination or address..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none text-sm"
+                className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none text-sm"
               />
             </div>
           </CardHeader>
@@ -187,8 +243,8 @@ export const TravellerDashboard: React.FC = () => {
                   onClick={() => setSearchQuery('')}
                   className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                     searchQuery === '' 
-                      ? 'bg-purple-600 text-white' 
-                      : 'bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200'
+                      ? 'bg-red-600 text-white' 
+                      : 'bg-red-50 text-red-700 hover:bg-red-100 border border-red-200'
                   }`}
                 >
                   All Destinations
@@ -199,8 +255,8 @@ export const TravellerDashboard: React.FC = () => {
                     onClick={() => setSearchQuery(dest)}
                     className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                       searchQuery.toLowerCase() === dest.toLowerCase()
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200'
+                        ? 'bg-red-600 text-white'
+                        : 'bg-red-50 text-red-700 hover:bg-red-100 border border-red-200'
                     }`}
                   >
                     {dest}
@@ -225,10 +281,10 @@ export const TravellerDashboard: React.FC = () => {
                 {filteredPlans.map((plan) => (
                   <div
                     key={plan.id}
-                    className="flex flex-col p-5 bg-purple-50 rounded-xl border border-purple-100 shadow-sm"
+                    className="flex flex-col p-5 bg-red-50 rounded-xl border border-red-100 shadow-sm"
                   >
                     {plan.imageUrls && plan.imageUrls.length > 0 && (
-                      <div className="mb-4 overflow-hidden rounded-lg border border-purple-100 bg-white">
+                      <div className="mb-4 overflow-hidden rounded-lg border border-red-100 bg-white">
                         <img
                           src={plan.imageUrls[0]}
                           alt={`${plan.destination} preview`}
@@ -242,13 +298,18 @@ export const TravellerDashboard: React.FC = () => {
                         className="cursor-pointer"
                         onClick={() => navigate(`/traveller/plan-details/${plan.id}`)}
                       >
-                        <h3 className="font-bold text-lg text-gray-900 group-hover:text-purple-700 transition-colors">
+                        <h3 className="font-bold text-lg text-gray-900 group-hover:text-red-700 transition-colors">
                           {plan.title}
                         </h3>
                         <p className="text-sm font-medium text-gray-700 mt-1">
                           {plan.destination}
                         </p>
-                        <p className="text-xs text-purple-600 font-semibold mt-1">
+                        {plan.exactAddress && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            {plan.exactAddress}
+                          </p>
+                        )}
+                        <p className="text-xs text-red-600 font-semibold mt-2">
                           Curated by Expert Agent
                         </p>
                       </div>
@@ -264,11 +325,11 @@ export const TravellerDashboard: React.FC = () => {
                     
                     <div className="flex items-center space-x-6 mt-4 text-sm text-gray-700">
                       <span className="flex items-center">
-                        <Calendar className="w-4 h-4 mr-1.5 text-purple-600" />
+                        <Calendar className="w-4 h-4 mr-1.5 text-red-600" />
                         {plan.numberOfDays} <span className="text-gray-500 ml-1">days</span>
                       </span>
                       <span className="flex items-center">
-                        <DollarSign className="w-4 h-4 mr-1.5 text-purple-600" />
+                        <DollarSign className="w-4 h-4 mr-1.5 text-red-600" />
                         {plan.budget} <span className="text-gray-500 ml-1">est.</span>
                       </span>
                     </div>
@@ -294,7 +355,7 @@ export const TravellerDashboard: React.FC = () => {
               type="date"
               value={travelDate}
               onChange={(e) => setTravelDate(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none"
               required
             />
           </div>
