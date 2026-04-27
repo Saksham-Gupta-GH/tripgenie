@@ -54,9 +54,21 @@ service cloud.firestore {
     }
 
     match /selected_plans/{docId} {
-      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow read: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid || 
+        isAdmin() ||
+        get(/databases/$(database)/documents/plans/$(resource.data.planId)).data.createdBy == request.auth.uid
+      );
       allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
-      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow update: if isAuthenticated() && (
+        isAdmin() ||
+        get(/databases/$(database)/documents/plans/$(resource.data.planId)).data.createdBy == request.auth.uid
+      );
+      allow delete: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid || 
+        isAdmin() ||
+        get(/databases/$(database)/documents/plans/$(resource.data.planId)).data.createdBy == request.auth.uid
+      );
     }
   }
 }

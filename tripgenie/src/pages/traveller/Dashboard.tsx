@@ -140,13 +140,17 @@ export const TravellerDashboard: React.FC = () => {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              leftIcon={<MapIcon className="w-4 h-4" />}
+            <button 
               onClick={() => setShowMap(!showMap)}
+              className={`flex items-center gap-2 px-6 py-3 rounded-full font-bold transition-all duration-300 shadow-lg hover:shadow-red-200/50 ${
+                showMap 
+                  ? 'bg-gray-800 text-white hover:bg-gray-900' 
+                  : 'bg-red-600 text-white hover:bg-red-700 animate-pulse-slow'
+              }`}
             >
-              {showMap ? 'Hide Map' : 'Explore Map'}
-            </Button>
+              <MapIcon className={`w-5 h-5 ${!showMap ? 'animate-bounce' : ''}`} />
+              {showMap ? 'Close World Explorer' : 'Explore Destination Map'}
+            </button>
           </div>
         </div>
 
