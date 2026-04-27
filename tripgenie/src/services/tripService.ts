@@ -134,9 +134,11 @@ export const tripService = {
       }
 
       // Get plan to find agentId
+      console.log('SelectPlan: Fetching plan for agentId...', planId);
       const plan = await tripService.getPlanById(planId);
       if (!plan) throw new Error('Plan not found');
 
+      console.log('SelectPlan: Saving booking with agentId:', plan.createdBy);
       const docRef = await addDoc(collection(db, SELECTED_PLANS_COLLECTION), {
         userId,
         planId,
@@ -213,11 +215,13 @@ export const tripService = {
 
   getAllBookingsForAgent: async (agentId: string): Promise<{plan: Plan, booking: SelectedPlan}[]> => {
     try {
+      console.log('TripService: Fetching bookings for agent...', agentId);
       const q = query(
         collection(db, SELECTED_PLANS_COLLECTION),
         where('agentId', '==', agentId)
       );
       const snapshot = await getDocs(q);
+      console.log('TripService: Found bookings count:', snapshot.size);
       
       const results = [];
       for (const docSnap of snapshot.docs) {
