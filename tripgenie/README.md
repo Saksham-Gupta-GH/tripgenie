@@ -2,6 +2,8 @@
 
 TripGenie is a role‑based travel planning platform that connects travellers with expert agents. Agents curate detailed trip plans, travellers discover and select plans with a travel date, and admins oversee the system.
 
+The assistant retrieves relevant agent-curated plans before generation. A PyTorch sentence-transformer performs semantic ranking, Gemini generates grounded answers, and OpenRouter provides automatic failover. Keyword retrieval is used if the PyTorch service is unavailable.
+
 Live: [https://tripgenie-ashy.vercel.app](https://tripgenie-ashy.vercel.app)
 
 ## Features
@@ -10,12 +12,14 @@ Live: [https://tripgenie-ashy.vercel.app](https://tripgenie-ashy.vercel.app)
 - Traveller discovery, search, and plan selection with travel date
 - Plan details with itinerary and image gallery
 - Admin user management and system overview
+- Resilient RAG assistant with plan-title and plan-ID citations
 
 ## Tech Stack
 - React + TypeScript + Vite
 - Firebase (Auth, Firestore, Storage)
 - Tailwind CSS
 - Vercel for deployment
+- PyTorch + Sentence Transformers retrieval service (see the root README)
 
 ## Getting Started
 ### 1) Install
@@ -34,6 +38,11 @@ VITE_FIREBASE_MESSAGING_SENDER_ID=
 VITE_FIREBASE_APP_ID=
 GEMINI_API_KEY=
 GEMINI_MODEL=gemini-1.5-flash-latest
+OPENROUTER_API_KEY=
+OPENROUTER_MODEL=
+RETRIEVAL_SERVICE_URL=
+RETRIEVAL_SERVICE_TOKEN=
+APP_URL=https://tripgenie-ashy.vercel.app
 ```
 
 ### 3) Run Locally

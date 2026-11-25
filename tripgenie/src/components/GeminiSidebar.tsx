@@ -2,7 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { X, Send, Sparkles, Bot, User, Lightbulb } from 'lucide-react';
 import { aiService } from '../services/aiService';
-import type { ChatMessage } from '../types';
+import { tripService } from '../services/tripService';
+import type { ChatMessage, Plan } from '../types';
 
 interface GeminiSidebarProps {
   isOpen: boolean;
@@ -56,8 +57,16 @@ export const GeminiSidebar: React.FC<GeminiSidebarProps> = ({
     setIsLoading(true);
 
     try {
+      let plans: Plan[] = [];
+      try {
+        plans = await tripService.getAllPlans();
+      } catch (retrievalError) {
+        // General travel chat remains available when Firestore is temporarily unavailable.
+        console.warn('Could not load plan context:', retrievalError);
+      }
       const response = await aiService.sendMessage(
-        userMessage.content
+        userMessage.content,
+        plans
       );
 
       const assistantMessage: ChatMessage = {

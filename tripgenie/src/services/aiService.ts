@@ -1,24 +1,31 @@
 import axios from 'axios';
+import type { Plan } from '../types';
 
 const API_BASE_URL = ''; // Vercel handles /api routes automatically
 
 export const aiService = {
-  sendMessage: async (message: string): Promise<string> => {
+  sendMessage: async (message: string, plans: Plan[] = []): Promise<string> => {
     console.log('AIService: Sending message to /api/gemini...', message);
     try {
       const response = await axios.post(`${API_BASE_URL}/api/gemini`, {
         message,
+        plans: plans.map(({ id, title, destination, numberOfDays, budget, itinerary }) => ({
+          id, title, destination, numberOfDays, budget, itinerary,
+        })),
       });
 
       if (response.data && response.data.reply) {
         return response.data.reply;
       }
       throw new Error('Invalid response format from AI server');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('AIService: Detailed Error', error);
-      
-      const serverMessage = error.response?.data?.error || error.response?.data?.details?.message;
-      const finalMessage = serverMessage || error.message || 'AI request failed';
+
+      const responseData = axios.isAxiosError(error)
+        ? error.response?.data as { error?: string; details?: { message?: string } } | undefined
+        : undefined;
+      const serverMessage = responseData?.error || responseData?.details?.message;
+      const finalMessage = serverMessage || (error instanceof Error ? error.message : 'AI request failed');
       
       throw new Error(finalMessage);
     }
